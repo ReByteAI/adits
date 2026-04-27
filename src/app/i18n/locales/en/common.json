@@ -1,0 +1,40 @@
+{
+  "actions": {
+    "create": "Create",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "confirm": "Confirm",
+    "send": "Send",
+    "open": "Open",
+    "rename": "Rename",
+    "duplicate": "Duplicate",
+    "share": "Share",
+    "download": "Download",
+    "upload": "Upload",
+    "copy": "Copy",
+    "paste": "Paste",
+    "retry": "Retry",
+    "tryAgain": "Try again",
+    "done": "Done",
+    "next": "Next",
+    "back": "Back",
+    "loading": "Loading…",
+    "untitled": "Untitled"
+  },
+  "navigation": {
+    "home": "Home",
+    "projects": "Projects",
+    "workspace": "Workspace",
+    "settings": "Settings",
+    "signOut": "Sign out"
+  },
+  "language": {
+    "label": "Language",
+    "change": "Change language"
+  }
+}

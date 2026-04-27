@@ -1,0 +1,33 @@
+{
+  "uploadCard": {
+    "title": "Drop a file here",
+    "subtitle": "or",
+    "browse": "browse to upload",
+    "hint": "PDF, images, documents up to 25 MB"
+  },
+  "upload": {
+    "title": "Add to your workspace",
+    "subtitle": "A file from your computer, cloud storage, or a link",
+    "dropText": "Drop files here, or click to browse",
+    "dropHint": "PDFs, images, documents, audio, video",
+    "fromCloud": "From cloud storage",
+    "googleDrive": "Google Drive",
+    "fromLink": "From a link",
+    "linkPlaceholder": "https://…",
+    "addLink": "Add link",
+    "invalidUrl": "Please enter a valid http(s) URL",
+    "addLinkFailed": "Failed to add link"
+  },
+  "card": {
+    "rename": "Rename",
+    "delete": "Delete",
+    "download": "Download",
+    "openInBench": "Open in bench",
+    "uploading": "Uploading…",
+    "failed": "Upload failed",
+    "deleteConfirm": "Delete {{name}}?",
+    "deleteWarning": "This permanently removes the file from this project.",
+    "downloadFile": "Download {{name}}",
+    "deleteFile": "Delete {{name}}"
+  }
+}

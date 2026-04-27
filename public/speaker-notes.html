@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title data-i18n="speakerNotes.docTitle">Speaker notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/main.css">
+<style>
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: var(--font-body);
+    background: var(--color-bg);
+    color: var(--color-ink);
+    padding: 32px 40px;
+    overflow: auto;
+    line-height: 1.5;
+  }
+  .meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font: 500 12px/1 var(--font-body);
+    color: var(--color-ash);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-mist);
+  }
+  .slide-num { font-variant-numeric: tabular-nums; }
+  .note {
+    font: 500 28px/1.45 var(--font-display);
+    letter-spacing: -0.005em;
+    white-space: pre-wrap;
+  }
+  .note.-empty {
+    color: var(--color-ash);
+    font-style: italic;
+  }
+  .hint {
+    position: fixed;
+    bottom: 16px;
+    left: 40px;
+    right: 40px;
+    font: 400 11px/1 var(--font-body);
+    color: var(--color-ash);
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+  <div class="meta">
+    <span class="label" data-i18n="speakerNotes.label">Speaker notes</span>
+    <span class="slide-num" id="slide-num">Slide 1</span>
+  </div>
+  <div class="note -empty" id="note" data-i18n="speakerNotes.waiting">Waiting for slide…</div>
+  <div class="hint" id="hint">Press Esc to exit present mode.</div>
+<script src="/js/i18n-static.js" defer></script>
+<script>
+(function () {
+  var notes = [];
+  var index = 0;
+  var noteEl = document.getElementById('note');
+  var numEl = document.getElementById('slide-num');
+  var hintEl = document.getElementById('hint');
+  var isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || '') || /Mac OS X/.test(navigator.userAgent || '');
+
+  function t(key, fallback) {
+    return (window.aditsI18n && window.aditsI18n.t) ? window.aditsI18n.t(key, fallback) : fallback;
+  }
+
+  function applyHint() {
+    if (!hintEl) return;
+    var tmpl = t('speakerNotes.hint', 'Press Esc or {{shortcut}} to exit present mode.');
+    hintEl.textContent = tmpl.replace('{{shortcut}}', isMac ? '⌘\\' : 'Ctrl+\\');
+  }
+
+  function render() {
+    numEl.textContent = t('speakerNotes.slide', 'Slide {{n}}').replace('{{n}}', index + 1);
+    var text = notes[index];
+    if (text && text.trim()) {
+      noteEl.textContent = text;
+      noteEl.className = 'note';
+    } else {
+      noteEl.textContent = notes.length
+        ? t('speakerNotes.noNotes', '(no notes for this slide)')
+        : t('speakerNotes.waiting', 'Waiting for slide…');
+      noteEl.className = 'note -empty';
+    }
+  }
+
+  // Re-render once translations land.
+  function whenReady(cb) {
+    if (window.aditsI18n) {
+      if (window.aditsI18n.dict && Object.keys(window.aditsI18n.dict).length) cb();
+      else window.aditsI18n.onReady(cb);
+    } else {
+      // Loader script not yet executed — defer one tick.
+      setTimeout(function () { whenReady(cb); }, 50);
+    }
+  }
+  whenReady(function () { applyHint(); render(); });
+  applyHint();
+
+  window.addEventListener('message', function (e) {
+    if (!window.opener || e.source !== window.opener) return;
+    var d = e.data;
+    if (!d || typeof d !== 'object') return;
+    if (Array.isArray(d.notes)) {
+      notes = d.notes;
+      render();
+    }
+    if (typeof d.slideIndexChanged === 'number') {
+      index = d.slideIndexChanged;
+      render();
+    }
+  });
+
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || (e.key === '\\' && (e.metaKey || e.ctrlKey))) {
+      e.preventDefault();
+      if (window.opener && !window.opener.closed) {
+        try { window.opener.postMessage({ type: 'notes-escape' }, '*'); } catch (_) {}
+      }
+      window.close();
+    }
+  });
+
+  // Ask opener for current notes on load (handles popup re-open after
+  // a slide-index was already emitted).
+  if (window.opener && !window.opener.closed) {
+    try { window.opener.postMessage({ type: 'notes-ready' }, '*'); } catch (_) {}
+  }
+  render();
+})();
+</script>
+</body>
+</html>

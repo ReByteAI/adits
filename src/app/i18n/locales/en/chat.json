@@ -1,0 +1,40 @@
+{
+  "removeSkill": "Remove {{skill}}",
+  "composer": {
+    "placeholderNew": "Describe what you want to create…",
+    "placeholderReply": "Reply to Adits, or add more context…",
+    "skills": "Skills",
+    "skillsTitle": "Attach a skill or design system",
+    "scrollLatest": "Scroll to latest",
+    "resizeSidebar": "Resize chat sidebar"
+  },
+  "header": {
+    "projectOverview": "Project overview",
+    "renameProject": "Rename project",
+    "fallbackName": "Project",
+    "tabChat": "Chat",
+    "tabHistory": "History",
+    "newTask": "New task"
+  },
+  "thread": {
+    "emptyChat": "Start a new task below.",
+    "emptyHistory": "No tasks yet.",
+    "you": "You",
+    "agent": "Adits",
+    "working": "✦ Working…",
+    "detail": "detail",
+    "formActive": "I have a few questions — see the form on the right →",
+    "formAnswered_one": "Asked {{count}} question.",
+    "formAnswered_other": "Asked {{count}} questions.",
+    "msgFailed": "— failed —",
+    "msgCanceled": "— canceled —"
+  },
+  "status": {
+    "completed": "completed",
+    "succeeded": "completed",
+    "failed": "failed",
+    "canceled": "canceled",
+    "running": "running",
+    "pending": "pending"
+  }
+}

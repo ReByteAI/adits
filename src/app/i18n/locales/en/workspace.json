@@ -1,0 +1,116 @@
+{
+  "skillsModal": {
+    "title": "Skills and design systems",
+    "subtitle": "Attach design systems or skills to give Claude additional context.",
+    "sectionDesignSystems": "Design systems",
+    "sectionSkills": "Skills",
+    "use": "Use"
+  },
+  "executor": {
+    "label": "Model",
+    "agent": "Agent: {{name}}"
+  },
+  "share": {
+    "button": "Share",
+    "duplicateProject": "Duplicate project",
+    "exportZip": "Download project as .zip",
+    "exportPdf": "Export as PDF",
+    "exportPptx": "Export as PPTX…",
+    "exportHtml": "Export as standalone HTML"
+  },
+  "tasks": {
+    "panelTitle": "All tasks",
+    "panelLabel": "All tasks",
+    "running": "{{count}} running",
+    "filterPlaceholder": "Filter…",
+    "empty": "No tasks yet.",
+    "noMatches": "No matches.",
+    "detail": "detail",
+    "cancelTask": "Cancel task"
+  },
+  "projectGate": {
+    "loading": "Loading…",
+    "error": "Couldn’t open this project.",
+    "retry": "Retry"
+  },
+  "bench": {
+    "designFiles": "Design Files",
+    "account": "Account",
+    "back": "Back",
+    "reload": "Reload",
+    "fallbackBreadcrumb": "project",
+    "tweaks": "Tweaks",
+    "tweaksToggle": "Toggle in-page tweak controls",
+    "tweaksUnavailable": "This page does not declare tweaks",
+    "savePending": "Save {{count}}",
+    "saveTweaksTitle": "Queue a Claude turn that writes the current tweak values into the file",
+    "comment": "Comment",
+    "edit": "Edit",
+    "draw": "Draw",
+    "fileNotFound": "File not found.",
+    "loading": "Loading…",
+    "empty": "No files in this project yet. Drop one into the bench to start.",
+    "dropFilesTitle": "Drop files here",
+    "dropFilesSub": "Images, docs, references, Figma links, or folders — Claude will use them as context.",
+    "clickToEdit": "Click an element in the page to edit.",
+    "clickToComment": "Click an element in the page to comment on.",
+    "closeTab": "Close {{name}}",
+    "fileOptions": "File options",
+    "collapseFolder": "Collapse folder",
+    "expandFolder": "Expand folder",
+    "folder": "Folder",
+    "section": {
+      "folders": "Folders",
+      "pages": "Pages",
+      "scripts": "Scripts",
+      "files": "Files"
+    },
+    "deleteTitle": "Delete file?",
+    "deleteMessage": "Delete \"{{name}}\"? This cannot be undone.",
+    "delete": "Delete",
+    "download": "Download",
+    "open": "Open",
+    "modifiedMeta": "Modified {{date}} · {{size}} · {{ext}}",
+    "backToProjectAria": "Back to project gallery",
+    "backToProject": "Back to project"
+  },
+  "viewer": {
+    "viewFile": "View the file",
+    "viewImage": "View the image",
+    "viewPdf": "View the PDF (select text, scroll, follow links)",
+    "viewLive": "View the live document (scroll, click, hover)",
+    "selectRegion": "Select a region and attach a comment",
+    "drawFree": "Draw a freeform region",
+    "annotationMode": "Annotation mode",
+    "undo": "Undo",
+    "clear": "Clear",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "resetZoom": "Reset zoom",
+    "prevPage": "Previous page",
+    "nextPage": "Next page",
+    "extracting": "Extracting slides…",
+    "preparing": "Preparing preview…",
+    "presEmpty": "No text found in this presentation.",
+    "pickBrush": "Pick brush color and size",
+    "mediaTimeline": "Media timeline — drag to select a range, click to seek",
+    "removePromptPiece": "Remove this prompt piece",
+    "remove": "Remove",
+    "napkinThin": "Thin",
+    "napkinThick": "Thick"
+  },
+  "comment": {
+    "title": "Comment",
+    "describePlaceholder": "Describe the issue or suggestion…",
+    "sendTitle": "Send the comment to Adits as an instruction attached to this element.",
+    "sendButton": "Send to Adits"
+  },
+  "questionForm": {
+    "decideForMe": "Decide for me",
+    "other": "Other",
+    "otherPlaceholder": "Other...",
+    "answerPlaceholder": "Your answer...",
+    "attachImage": "Attach image",
+    "removeAttachment": "Remove attachment"
+  }
+}

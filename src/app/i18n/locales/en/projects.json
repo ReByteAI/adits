@@ -1,0 +1,23 @@
+{
+  "docs": "Docs",
+  "newProject": "New project",
+  "newWithTemplate": "New {{template}}",
+  "namePlaceholder": "Project name",
+  "designSystem": "Design system",
+  "designSystemNone": "None",
+  "creating": "Creating…",
+  "createButton": "+ Create",
+  "privacy": "Only you can see your project by default.",
+  "searchPlaceholder": "Search projects",
+  "loading": "Loading projects…",
+  "empty": "No projects yet — create one on the left.",
+  "noMatch": "No projects match “{{q}}”.",
+  "loadError": "Couldn’t load projects.",
+  "personalWorkspace": "Personal workspace",
+  "signedIn": "Signed in",
+  "fileCount_one": "{{count}} file",
+  "fileCount_other": "{{count}} files",
+  "fileCountEmpty": "Empty",
+  "updatedAt": "Updated {{date}}",
+  "accountSettings": "Account settings"
+}

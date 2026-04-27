@@ -1,0 +1,141 @@
+@mixin button-styles($bg-color, $text-color, $hover-bg-color, $border-color: #111, $shadow-color: #111) {
+  display: inline-block;
+  padding: 0.5em 1em;
+  background-color: $bg-color;
+  color: $text-color;
+  border: 2.5px solid $border-color;
+  box-shadow: 5px 5px 0 $shadow-color;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-family: "Lexend Mega", "Public Sans", Arial, sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-align: center;
+  text-decoration: none;
+  position: relative;
+  z-index: 1;
+  outline: none;
+  transition:
+    background 0.15s cubic-bezier(.77,0,.18,1),
+    color 0.15s cubic-bezier(.77,0,.18,1),
+    box-shadow 0.15s cubic-bezier(.77,0,.18,1),
+    transform 0.1s cubic-bezier(.77,0,.18,1);
+
+  @include respond-to(sm) {
+    padding: 0.6em 1.2em;
+    border-width: 3px;
+    box-shadow: 6px 6px 0 $shadow-color;
+    font-size: 0.9rem;
+  }
+
+  @include respond-to(md) {
+    padding: 0.7em 1.5em;
+    border-width: 3.5px;
+    box-shadow: 7px 7px 0 $shadow-color;
+    font-size: 1rem;
+  }
+
+  &:hover,
+  &:focus {
+    background-color: $hover-bg-color;
+    color: $text-color;
+    box-shadow: 2px 2px 0 $shadow-color;
+    outline: none;
+    transform: translate(2px, 2px);
+  }
+
+  &:active {
+    box-shadow: none;
+    transform: translate(4px, 4px);
+  }
+
+  &.disabled {
+    background-color: #ccc;
+    color: #888;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+$button-variants: (
+  default: (
+    $white,
+    $black,
+    #aaaaaa,
+    $black,
+    $black,
+  ),
+  orange: (
+    $orange,
+    $white,
+    $hover-orange,
+    $black,
+    $black,
+  ),
+  blue: (
+    $blue,
+    $white,
+    $hover-blue,
+    $black,
+    $black,
+  ),
+  green: (
+    $green,
+    $white,
+    $hover-green,
+    $black,
+    $black,
+  ),
+  sky-blue: (
+    $sky-blue,
+    $white,
+    $hover-sky-blue,
+    $black,
+    $black,
+  ),
+  pale-red: (
+    $pale-red,
+    $white,
+    $hover-pale-red,
+    $black,
+    $black,
+  ),
+  pale-violet: (
+    $pale-violet,
+    $white,
+    $hover-pale-violet,
+    $black,
+    $black,
+  ),
+  soft-blue: (
+    $soft-blue,
+    $white,
+    $hover-soft-blue,
+    $black,
+    $black,
+  ),
+  pale-cyan: (
+    $pale-cyan,
+    $white,
+    $hover-pale-cyan,
+    $black,
+    $black,
+  ),
+  pale-yellow: (
+    $pale-yellow,
+    $black,
+    $hover-pale-yellow,
+    $black,
+    $black,
+  ),
+);
+
+@each $variant, $colors in $button-variants {
+  .nb-button.#{$variant} {
+    @include button-styles($colors...);
+  }
+}
+
+.rounded {
+  border-radius: 0.7em;
+}

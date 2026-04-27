@@ -1,0 +1,116 @@
+{
+  "skillsModal": {
+    "title": "技能与设计系统",
+    "subtitle": "附加设计系统或技能,为 Claude 提供更多上下文。",
+    "sectionDesignSystems": "设计系统",
+    "sectionSkills": "技能",
+    "use": "使用"
+  },
+  "executor": {
+    "label": "模型",
+    "agent": "智能体:{{name}}"
+  },
+  "share": {
+    "button": "分享",
+    "duplicateProject": "复制项目",
+    "exportZip": "打包为 .zip 下载",
+    "exportPdf": "导出为 PDF",
+    "exportPptx": "导出为 PPTX…",
+    "exportHtml": "导出为独立 HTML"
+  },
+  "tasks": {
+    "panelTitle": "所有任务",
+    "panelLabel": "所有任务",
+    "running": "{{count}} 个进行中",
+    "filterPlaceholder": "筛选…",
+    "empty": "暂无任务。",
+    "noMatches": "没有匹配项。",
+    "detail": "详情",
+    "cancelTask": "取消任务"
+  },
+  "projectGate": {
+    "loading": "加载中…",
+    "error": "无法打开此项目。",
+    "retry": "重试"
+  },
+  "bench": {
+    "designFiles": "设计文件",
+    "account": "账户",
+    "back": "返回",
+    "reload": "重新加载",
+    "fallbackBreadcrumb": "项目",
+    "tweaks": "调参",
+    "tweaksToggle": "切换页面内调参控件",
+    "tweaksUnavailable": "此页面未声明可调参数",
+    "savePending": "保存 {{count}} 项",
+    "saveTweaksTitle": "排队一个 Claude 回合,将当前调参值写入文件",
+    "comment": "评论",
+    "edit": "编辑",
+    "draw": "绘制",
+    "fileNotFound": "文件未找到。",
+    "loading": "加载中…",
+    "empty": "项目中还没有文件。将文件拖入工作台开始使用。",
+    "dropFilesTitle": "拖放文件到此处",
+    "dropFilesSub": "图片、文档、参考资料、Figma 链接或文件夹 — Claude 会将它们作为上下文。",
+    "clickToEdit": "点击页面中的元素进行编辑。",
+    "clickToComment": "点击页面中的元素进行评论。",
+    "closeTab": "关闭 {{name}}",
+    "fileOptions": "文件选项",
+    "collapseFolder": "收起文件夹",
+    "expandFolder": "展开文件夹",
+    "folder": "文件夹",
+    "section": {
+      "folders": "文件夹",
+      "pages": "页面",
+      "scripts": "脚本",
+      "files": "文件"
+    },
+    "deleteTitle": "删除文件?",
+    "deleteMessage": "删除 \"{{name}}\"?此操作无法撤销。",
+    "delete": "删除",
+    "download": "下载",
+    "open": "打开",
+    "modifiedMeta": "修改于 {{date}} · {{size}} · {{ext}}",
+    "backToProjectAria": "返回项目列表",
+    "backToProject": "返回项目"
+  },
+  "viewer": {
+    "viewFile": "查看文件",
+    "viewImage": "查看图片",
+    "viewPdf": "查看 PDF(选择文字、滚动、跟随链接)",
+    "viewLive": "查看实时文档(滚动、点击、悬停)",
+    "selectRegion": "选择区域并附加评论",
+    "drawFree": "自由绘制区域",
+    "annotationMode": "标注模式",
+    "undo": "撤销",
+    "clear": "清除",
+    "zoomIn": "放大",
+    "zoomOut": "缩小",
+    "resetZoom": "重置缩放",
+    "prevPage": "上一页",
+    "nextPage": "下一页",
+    "extracting": "正在提取幻灯片…",
+    "preparing": "正在准备预览…",
+    "presEmpty": "此演示文稿中未找到文本。",
+    "pickBrush": "选择画笔颜色和粗细",
+    "mediaTimeline": "媒体时间轴 — 拖动选择范围,点击跳转",
+    "removePromptPiece": "移除此提示片段",
+    "remove": "移除",
+    "napkinThin": "细",
+    "napkinThick": "粗"
+  },
+  "comment": {
+    "title": "评论",
+    "describePlaceholder": "描述问题或建议…",
+    "sendTitle": "将评论作为附加到此元素的指令发送给 Adits。",
+    "sendButton": "发送给 Adits"
+  },
+  "questionForm": {
+    "decideForMe": "由你决定",
+    "other": "其他",
+    "otherPlaceholder": "其他...",
+    "answerPlaceholder": "你的回答...",
+    "attachImage": "附加图片",
+    "removeAttachment": "移除附件"
+  }
+}

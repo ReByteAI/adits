@@ -1,0 +1,69 @@
+{
+  "title": "A few questions about this webpage",
+  "questions": [
+    {
+      "id": "purpose",
+      "label": "What is this webpage for?",
+      "type": "choice",
+      "options": [
+        "Product landing page",
+        "Personal portfolio / resume",
+        "Company homepage",
+        "Event / launch page",
+        "Blog / reading page",
+        "SaaS product intro"
+      ],
+      "allowOther": true,
+      "allowExplore": true,
+      "allowDecideForMe": true
+    },
+    {
+      "id": "topic",
+      "label": "What is the subject or content?",
+      "hint": "Product name, company name, main selling point, key message. Be specific.",
+      "type": "text",
+      "allowImageAttachment": true
+    },
+    {
+      "id": "audience",
+      "label": "Who is the target audience?",
+      "hint": "e.g. developers, designers, enterprise buyers, everyday consumers.",
+      "type": "text",
+      "allowImageAttachment": true
+    },
+    {
+      "id": "brand_assets",
+      "label": "Any brand assets, logo, screenshots, or reference images?",
+      "hint": "Upload one if you have any; otherwise I'll use placeholders.",
+      "type": "file"
+    },
+    {
+      "id": "style",
+      "label": "Visual style preference?",
+      "type": "choice",
+      "options": [
+        "Minimal / lots of whitespace (Linear / Vercel)",
+        "Bold and expressive (Stripe / Figma)",
+        "Editorial / magazine layout",
+        "Techy / dark mode",
+        "Warm / hand-drawn / organic"
+      ],
+      "allowOther": true,
+      "allowExplore": true,
+      "allowDecideForMe": true
+    },
+    {
+      "id": "color_direction",
+      "label": "Color direction?",
+      "type": "choice",
+      "options": [
+        "Monochrome / black & white",
+        "One accent + neutrals",
+        "Multicolor / gradients",
+        "Dark mode"
+      ],
+      "allowOther": true,
+      "allowDecideForMe": true
+    }
+  ]
+}

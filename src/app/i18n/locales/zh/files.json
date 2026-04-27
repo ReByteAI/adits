@@ -1,0 +1,33 @@
+{
+  "uploadCard": {
+    "title": "拖放文件到此处",
+    "subtitle": "或",
+    "browse": "浏览上传",
+    "hint": "PDF、图片、文档,最大 25 MB"
+  },
+  "upload": {
+    "title": "添加到工作区",
+    "subtitle": "来自电脑、云存储或链接的文件",
+    "dropText": "拖放文件到此处,或点击浏览",
+    "dropHint": "PDF、图片、文档、音频、视频",
+    "fromCloud": "从云存储",
+    "googleDrive": "Google 云端硬盘",
+    "fromLink": "从链接",
+    "linkPlaceholder": "https://…",
+    "addLink": "添加链接",
+    "invalidUrl": "请输入有效的 http(s) 网址",
+    "addLinkFailed": "添加链接失败"
+  },
+  "card": {
+    "rename": "重命名",
+    "delete": "删除",
+    "download": "下载",
+    "openInBench": "在工作台打开",
+    "uploading": "上传中…",
+    "failed": "上传失败",
+    "deleteConfirm": "删除 {{name}}?",
+    "deleteWarning": "此操作将从该项目永久移除文件。",
+    "downloadFile": "下载 {{name}}",
+    "deleteFile": "删除 {{name}}"
+  }
+}

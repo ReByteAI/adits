@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://adits.app/schemas/ask-design-questions.json",
+  "title": "AskDesignQuestions",
+  "description": "Structured question-set the agent emits to `.adits/questions.json` when it needs clarification. The app renders this as a form.",
+  "type": "object",
+  "required": ["title", "questions"],
+  "additionalProperties": false,
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "Heading shown above the form."
+    },
+    "questions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": { "$ref": "#/$defs/question" }
+    }
+  },
+  "$defs": {
+    "questionIdPattern": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "minLength": 1,
+      "maxLength": 40,
+      "description": "Stable slug, unique within the form. Lowercase, digits, underscores. Starts with a letter."
+    },
+    "question": {
+      "oneOf": [
+        { "$ref": "#/$defs/choiceQuestion" },
+        { "$ref": "#/$defs/textQuestion" },
+        { "$ref": "#/$defs/fileQuestion" }
+      ]
+    },
+    "choiceQuestion": {
+      "type": "object",
+      "description": "Chip row, single-select.",
+      "required": ["id", "label", "type", "options"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/questionIdPattern" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "hint": { "type": "string", "maxLength": 300 },
+        "type": { "const": "choice" },
+        "options": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 12,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 80 }
+        },
+        "allowOther": {
+          "type": "boolean",
+          "default": false,
+          "description": "Adds an `Other` chip with an inline text input."
+        },
+        "allowExplore": {
+          "type": "boolean",
+          "default": false,
+          "description": "Adds `Explore a few options`. Use on taste/style questions."
+        },
+        "allowDecideForMe": {
+          "type": "boolean",
+          "default": false,
+          "description": "Adds `Decide for me`. Use on taste/style questions."
+        }
+      }
+    },
+    "textQuestion": {
+      "type": "object",
+      "description": "Free-text textarea.",
+      "required": ["id", "label", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/questionIdPattern" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "hint": { "type": "string", "maxLength": 300 },
+        "type": { "const": "text" },
+        "allowImageAttachment": {
+          "type": "boolean",
+          "default": false,
+          "description": "Adds a paperclip for inline image paste/upload."
+        }
+      }
+    },
+    "fileQuestion": {
+      "type": "object",
+      "description": "Single-file upload dropzone.",
+      "required": ["id", "label", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/questionIdPattern" },
+        "label": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "hint": { "type": "string", "maxLength": 300 },
+        "type": { "const": "file" }
+      }
+    }
+  }
+}

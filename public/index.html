@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TEXGHC7V34"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-TEXGHC7V34');
+  </script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="landing.docTitle">Adits — Edit your files, effortlessly</title>
+  <meta name="description" content="Reference what matters. Agents do the rest. Adits refines PDFs, images, and documents from a single detail.">
+  <meta name="theme-color" content="#fafafa">
+  <link rel="canonical" href="https://adits.app">
+
+  <!-- OpenGraph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://adits.app">
+  <meta property="og:title" content="Adits — Edit your files, effortlessly">
+  <meta property="og:description" content="Reference what matters. Agents do the rest. Adits refines PDFs, images, and documents from a single detail.">
+  <meta property="og:image" content="https://adits.app/og-image.jpg">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Adits — Edit your files, effortlessly">
+  <meta name="twitter:description" content="Reference what matters. Agents do the rest.">
+  <meta name="twitter:image" content="https://adits.app/og-image.jpg">
+
+  <link rel="icon" type="image/png" href="/logo-mark.png?v=4">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <script>
+    // If the visitor already has a Clerk session — OR is mid-handshake
+    // after signing in — skip the landing page and go straight to the
+    // app. Clerk exposes __client_uat as a non-HttpOnly cookie: "0"
+    // when signed out, a unix timestamp when signed in. A
+    // ?__clerk_handshake=... query param is Clerk's post-sign-in
+    // bounceback carrying the session cookies inside a JWT; only the
+    // Clerk SDK (loaded in app.html, not here) can decode it, so we
+    // must forward the param intact to /projects. Running this inline
+    // in <head> avoids a flash of the landing page. Visitors can
+    // bypass with ?stay=1 (useful for sharing the landing URL while
+    // logged in).
+    (function () {
+      try {
+        var params = new URLSearchParams(location.search);
+        if (params.has('stay')) return;
+        if (params.has('__clerk_handshake')) {
+          location.replace('/projects' + location.search + location.hash);
+          return;
+        }
+        var uat = document.cookie.split('; ').find(function (c) {
+          return c.indexOf('__client_uat=') === 0;
+        });
+        if (uat && uat.slice('__client_uat='.length) !== '0') {
+          location.replace('/projects');
+        }
+      } catch (e) { /* cookie parse errors never block the landing page */ }
+    })();
+  </script>
+  </head>
+<body>
+  <!-- Skip to main content link for keyboard users -->
+  <a href="#main-content" class="skip-link" data-i18n="landing.skipLink">Skip to main content</a>
+
+  <!-- Grain Overlay -->
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <!-- Sticky Section Nav (commented out — original sections removed)
+  <nav class="section-nav" id="section-nav" aria-label="Page sections">
+    <a href="#antidote" class="section-nav-item" data-section="antidote"><span class="section-nav-num">01</span><span class="section-nav-label">Anti-Patterns</span></a>
+    <a href="#solution" class="section-nav-item" data-section="solution"><span class="section-nav-num">02</span><span class="section-nav-label">Framework</span></a>
+    <a href="#commands-section" class="section-nav-item" data-section="commands-section"><span class="section-nav-num">03</span><span class="section-nav-label">Commands</span></a>
+    <a href="#downloads" class="section-nav-item" data-section="downloads"><span class="section-nav-num">04</span><span class="section-nav-label">Install</span></a>
+    <a href="#changelog" class="section-nav-item" data-section="changelog"><span class="section-nav-num">05</span><span class="section-nav-label">Changelog</span></a>
+    <a href="#faq" class="section-nav-item" data-section="faq"><span class="section-nav-num">06</span><span class="section-nav-label">FAQ</span></a>
+  </nav>
+  -->
+
+  <!-- 1. HERO — left/right split. Typography stays kami (serif body
+       inherited from main.css, ink blue accent, warm neutrals); the
+       layout itself is the original combined hero with the before/after
+       demo on the right. -->
+
+  <section id="hero" class="hero-combined">
+    <a href="/" class="hero-top-brand" data-i18n-attr="aria-label:landing.brandHome">
+      <img src="/logo-mark.png" alt="" class="hero-top-brand-mark">
+      <span class="hero-top-brand-name">Adits</span>
+    </a>
+    <div class="hero-top-actions">
+      <a class="github-link-btn" href="https://github.com/ReByteAI/adits" target="_blank" rel="noopener noreferrer" data-i18n-attr="aria-label:landing.githubAria">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      </a>
+    </div>
+    <div class="hero-combined-container">
+      <!-- Left: Title & Info -->
+      <div class="hero-combined-left">
+        <h1 class="hero-title-combined">Adits</h1>
+        <p class="hero-tagline-combined" data-i18n-html="landing.tagline">Reference what matters.<br>Agents do the rest.</p>
+
+        <div class="hero-cta-group">
+          <a href="/projects" class="hero-cta-combined" data-i18n="landing.cta">Start Aditing</a>
+        </div>
+      </div>
+
+      <!-- Right: Before/After Demo -->
+      <div class="hero-combined-right">
+        <div class="split-comparison" id="lens-comparison">
+          <div class="split-container">
+            <!-- Before: messy file -->
+            <div class="split-before">
+              <div class="slop-card">
+                <p class="slop-eyebrow" data-i18n="landing.beforeEyebrow">Reference</p>
+                <h3 class="slop-heading" data-i18n="landing.beforeTitle">Your idea</h3>
+                <div class="slop-sources">
+                  <span class="slop-source has-tooltip" data-tooltip="Images"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
+                  <span class="slop-source has-tooltip" data-tooltip="Video"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="15" height="16" rx="2"/><path d="M17 10l5-3v10l-5-3"/></svg></span>
+                  <span class="slop-source has-tooltip" data-tooltip="PDF"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>
+                  <span class="slop-source has-tooltip" data-tooltip="Office"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+                  <span class="slop-source has-tooltip" data-tooltip="Audio"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+                  <span class="slop-source has-tooltip" data-tooltip="Code"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
+                </div>
+              </div>
+            </div>
+            <!-- After: Adits result -->
+            <div class="split-after">
+              <div class="impeccable-card">
+                <p class="impeccable-eyebrow" data-i18n="landing.afterEyebrow">Transform</p>
+                <h3 class="impeccable-title" data-i18n="landing.afterTitle">Polished design</h3>
+                <div class="impeccable-outputs">
+                  <div class="output-thumb">
+                    <div class="output-thumb-icon">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="7" y1="8" x2="17" y2="8"/><line x1="7" y1="12" x2="13" y2="12"/><rect x="7" y="15" width="6" height="3" rx="0.5"/></svg>
+                    </div>
+                    <span>Wireframe</span>
+                  </div>
+                  <div class="output-thumb">
+                    <div class="output-thumb-icon">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="16" height="12" rx="1"/><rect x="6" y="4" width="16" height="12" rx="1" fill="var(--color-paper)"/></svg>
+                    </div>
+                    <span>Deck</span>
+                  </div>
+                  <div class="output-thumb">
+                    <div class="output-thumb-icon">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="1"/><circle cx="12" cy="9" r="3"/><line x1="8" y1="16" x2="16" y2="16"/><line x1="9" y1="19" x2="15" y2="19"/></svg>
+                    </div>
+                    <span>Poster</span>
+                  </div>
+                  <div class="output-thumb">
+                    <div class="output-thumb-icon">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M4 7h16"/><circle cx="7" cy="5" r="0.5" fill="currentColor"/><circle cx="9" cy="5" r="0.5" fill="currentColor"/><line x1="8" y1="11" x2="16" y2="11"/><line x1="8" y1="14" x2="14" y2="14"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+                    </div>
+                    <span>Page</span>
+                  </div>
+                  <div class="output-thumb">
+                    <div class="output-thumb-icon">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="16" x2="16" y2="16"/><line x1="8" y1="19" x2="13" y2="19"/></svg>
+                    </div>
+                    <span>Document</span>
+                  </div>
+                  <div class="output-thumb">
+                    <div class="output-thumb-icon">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="1"/><path d="M17 10l4-2.5v9L17 14"/></svg>
+                    </div>
+                    <span>Video</span>
+                  </div>
+                  <div class="output-thumb">
+                    <div class="output-thumb-icon">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 16l3-9 3 9"/><line x1="10.2" y1="13" x2="13.8" y2="13"/></svg>
+                    </div>
+                    <span>Logo</span>
+                  </div>
+                  <div class="output-thumb">
+                    <div class="output-thumb-icon">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="1"/><line x1="5" y1="11" x2="12" y2="11"/><line x1="5" y1="14" x2="9" y2="14"/></svg>
+                    </div>
+                    <span>Banner</span>
+                  </div>
+                  <div class="output-thumb">
+                    <div class="output-thumb-icon">
+                      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M4 17l5-4 4 3 7-6"/></svg>
+                    </div>
+                    <span>Social</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- The Divider -->
+            <div class="split-divider"></div>
+          </div>
+          <div class="split-labels">
+            <div class="split-label-item" data-point="before">
+              <span class="split-label-dot"></span>
+              <span data-i18n="landing.beforeTitle">Your idea</span>
+            </div>
+            <div class="split-label-item" data-point="after">
+              <span class="split-label-dot split-label-dot--accent"></span>
+              <span data-i18n="landing.afterTitle">Polished design</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <main class="site-content" id="main-content">
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <span class="footer-logo">Adits</span>
+      </div>
+      <div class="footer-links">
+        <a href="/projects" data-i18n="landing.footerApp">App</a>
+        <a href="/privacy" data-i18n="landing.footerPrivacy">Privacy</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/i18n-static.js" defer></script>
+  <script type="module">
+    import { initLensEffect } from './js/components/lens.js';
+    initLensEffect();
+  </script>
+</body>
+</html>

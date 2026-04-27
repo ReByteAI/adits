@@ -1,0 +1,4147 @@
+/*
+ * app.css — Adits Workspace
+ *
+ * Layout and component styles for the /app workspace.
+ * Inherits all design tokens, resets, and base styles from main.css.
+ */
+
+/* ============================================
+   APP BODY OVERRIDE
+   ============================================ */
+
+.app-body {
+  overflow: hidden;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* ============================================
+   TOP NAVIGATION
+   ============================================ */
+
+.app-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-md);
+  background: oklch(98% 0 0 / 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-mist);
+}
+
+.app-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* Sidebar fold toggle — lives in the nav so it's reachable even when the
+ * sidebar is fully collapsed (width: 0). Paired with the Ctrl/Cmd+B
+ * shortcut wired in App.tsx. */
+.app-nav-collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  color: var(--color-ash);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+}
+
+.app-nav-collapse:hover {
+  color: var(--color-ink);
+  background: var(--color-cream);
+}
+
+.app-nav-collapse[aria-pressed="false"] {
+  color: var(--color-accent);
+}
+
+/* Debug tasks button + popover — gated on `debugViewEnabled` in ui-store.
+ * Mirrors CC2's debug pattern: flip the bit (7 clicks on the logo, or
+ * `window.__aditsDebug.enable()`), and the button shows up top-right. */
+.app-nav-tasks-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.app-nav-tasks-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--color-cream);
+  border: 1px solid var(--color-mist);
+  border-radius: 8px;
+  color: var(--color-ash);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
+}
+
+.app-nav-tasks-btn:hover,
+.app-nav-tasks-btn[aria-expanded="true"] {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.tasks-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 420px;
+  max-height: 70vh;
+  background: var(--color-paper);
+  border: 1px solid var(--color-mist);
+  border-radius: 12px;
+  box-shadow: 0 16px 48px rgba(15, 12, 8,0.12), 0 4px 12px rgba(15, 12, 8,0.04);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tasks-panel-header {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--color-mist);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tasks-panel-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-charcoal);
+}
+
+.tasks-panel-count {
+  color: var(--color-ash);
+  font-weight: 400;
+}
+
+.tasks-panel-search {
+  width: 100%;
+  padding: 7px 10px;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-ink);
+  background: var(--color-cream);
+  border: 1px solid var(--color-mist);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.tasks-panel-search:focus {
+  border-color: var(--color-accent);
+}
+
+.tasks-panel-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.tasks-panel-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--color-ash);
+  font-size: 0.8125rem;
+}
+
+.tasks-panel-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid oklch(92% 0 0 / 0.4);
+}
+
+.tasks-panel-row:last-child {
+  border-bottom: none;
+}
+
+.tasks-panel-status {
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-ash);
+}
+
+.tasks-panel-status--running,
+.tasks-panel-status--pending,
+.tasks-panel-status--queued,
+.tasks-panel-status--processing {
+  color: var(--color-accent);
+  animation: tasks-panel-pulse 1.4s var(--ease-in-out) infinite;
+}
+
+@keyframes tasks-panel-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* Per-row cancel button — only rendered for cancelable statuses. Small
+ * ghost square that lights up red on hover. Disabled during an in-flight
+ * cancel with a matching spinner that reuses the bench-spin keyframe. */
+.tasks-panel-cancel {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--color-ash);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+}
+
+.tasks-panel-cancel:hover:not(:disabled) {
+  color: oklch(55% 0.2 25);
+  border-color: oklch(55% 0.2 25 / 0.4);
+  background: oklch(55% 0.2 25 / 0.08);
+}
+
+.tasks-panel-cancel:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.tasks-panel-cancel-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid var(--color-mist);
+  border-top-color: var(--color-ash);
+  border-radius: 50%;
+  animation: bench-spin 0.8s linear infinite;
+}
+
+@keyframes bench-spin {
+  to { transform: rotate(360deg); }
+}
+
+.tasks-panel-status--completed {
+  color: oklch(55% 0.15 145);
+}
+
+.tasks-panel-status--failed {
+  color: oklch(55% 0.2 25);
+}
+
+.tasks-panel-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tasks-panel-prompt {
+  font-size: 0.8125rem;
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.tasks-panel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-ash);
+}
+
+.tasks-panel-project {
+  color: var(--color-charcoal);
+  font-weight: 500;
+}
+
+.tasks-panel-sep {
+  opacity: 0.5;
+}
+
+.tasks-panel-meta a {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.tasks-panel-meta a:hover {
+  text-decoration: underline;
+}
+
+/* Logo */
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--color-ink);
+}
+
+.app-logo:hover {
+  text-decoration: none;
+  color: var(--color-ink);
+}
+
+.app-logo-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.app-logo-mark svg,
+.app-logo-mark img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.app-logo-text {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+/* Nav buttons */
+
+.app-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  color: var(--color-ash);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+}
+
+.app-nav-btn:hover {
+  color: var(--color-ink);
+  background: var(--color-cream);
+}
+
+/* Avatar */
+
+.app-avatar-wrap {
+  position: relative;
+}
+
+.app-avatar {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-cream);
+  border: 1px solid var(--color-mist);
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.app-avatar:hover {
+  border-color: var(--color-accent);
+}
+
+.app-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.app-avatar-initial {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-charcoal);
+}
+
+/* Avatar dropdown menu */
+
+.app-avatar-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 220px;
+  background: var(--color-paper);
+  border: 1px solid var(--color-mist);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(15, 12, 8,0.08), 0 2px 8px rgba(15, 12, 8,0.04);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.app-avatar-menu-user {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.app-avatar-menu-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.app-avatar-menu-email {
+  font-size: 0.6875rem;
+  color: var(--color-ash);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-avatar-menu-divider {
+  margin: 0;
+  border: none;
+  border-top: 1px solid var(--color-mist);
+}
+
+.app-avatar-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-charcoal);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+}
+
+.app-avatar-menu-item:hover {
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+/* ============================================
+   APP LAYOUT
+   ============================================ */
+
+.app-layout {
+  display: flex;
+  height: calc(100vh - 56px);
+  height: calc(100dvh - 56px);
+  margin-top: 56px;
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
+
+.app-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--color-cream);
+  border-right: 1px solid var(--color-mist);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: width var(--duration-base) var(--ease-out),
+              border-right-width var(--duration-base) var(--ease-out);
+}
+
+/* Fully-collapsed state (Ctrl/Cmd+B). We animate width to 0 and drop
+ * the border so the fold is seamless. The uncollapse button lives in
+ * the Nav — see .app-nav-collapse — so there's always an affordance
+ * to bring the sidebar back. */
+.app-sidebar.is-collapsed {
+  width: 0;
+  border-right-width: 0;
+}
+
+.app-sidebar-header {
+  padding: var(--spacing-xs) 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 240px;
+}
+
+.app-sidebar-add,
+.app-sidebar-collapse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: none;
+  border: none;
+  color: var(--color-ash);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+}
+
+.app-sidebar-add:hover,
+.app-sidebar-collapse:hover {
+  color: var(--color-ink);
+  background: oklch(92% 0 0 / 0.5);
+}
+
+/* While an optimistic create is in flight, the button is disabled so a
+ * second click can't kick off a duplicate provisioning. The store also
+ * single-flights the action — this is the visual signal. */
+.app-sidebar-add:disabled {
+  opacity: 0.4;
+  cursor: progress;
+  pointer-events: none;
+}
+
+.app-projects-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 8px 12px;
+  min-width: 240px;
+}
+
+/* Project row — flex container that puts the name on the left and a
+ * pair of hover-revealed action icons (rename / delete) on the right.
+ * Not a <button> anymore: we use role="button" on a <div> so inner
+ * action buttons can capture their own clicks without the "button
+ * inside button" HTML validation error. The row itself holds the
+ * background/padding/focus ring; an inner `.app-project-row-view`
+ * (or `-edit-wrap`) provides the flex layout so motion's AnimatePresence
+ * can cross-fade between the two inner states without fighting the
+ * row's own layout animation. */
+.app-project-row {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  text-align: left;
+  margin: 1px 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-charcoal);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 450;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+  outline: none;
+  overflow: hidden;
+}
+
+/* Padding lives on the inner wraps (not the row itself) so the row can
+ * cleanly animate its `height` to 0 on exit without fighting residual
+ * padding. The outer row keeps the background + border-radius + hover
+ * state; the inner wrap holds the flex layout. */
+.app-project-row-view,
+.app-project-row-edit-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding: 7px 8px 7px 12px;
+}
+
+.app-project-row:hover {
+  background: oklch(92% 0 0 / 0.5);
+  color: var(--color-ink);
+}
+
+.app-project-row:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.app-project-row.is-active {
+  background: rgba(27, 54, 93, 0.08);
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+.app-project-row-name {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Inline action strip — always visible but muted so new users can
+ * discover the delete/rename affordance without having to hover-hunt.
+ * Full opacity on hover/focus for emphasis. `flex-shrink: 0` keeps the
+ * icons sized even when the name is long enough to need truncation. */
+.app-project-row-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.app-project-row:hover .app-project-row-actions,
+.app-project-row:focus-within .app-project-row-actions {
+  opacity: 1;
+}
+
+.app-project-row-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--color-ash, #888);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+}
+
+.app-project-row-action:hover {
+  background: oklch(85% 0 0 / 0.6);
+  color: var(--color-ink);
+}
+
+.app-project-row-action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.app-project-row-action--danger:hover {
+  background: oklch(90% 0.08 25 / 0.6);
+  color: oklch(50% 0.2 25);
+}
+
+/* Inline edit state — used by both create ("+" click) and rename
+ * (pencil icon). The row keeps its exact footprint and visual shell
+ * so the sidebar doesn't reflow; only the text becomes an editable
+ * input. Actions are hidden during edit. */
+.app-project-row.is-editing {
+  background: var(--color-paper, #fff);
+  outline: 1px solid var(--color-accent, #1B365D);
+  outline-offset: -1px;
+  cursor: text;
+}
+
+.app-project-row.is-editing .app-project-row-actions {
+  display: none;
+}
+
+.app-project-row-input {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: inherit;
+}
+
+.app-project-row-input::selection {
+  background: rgba(27, 54, 93, 0.18);
+}
+
+/* ─── Undo toolbar ───
+ * Slides up from the bottom edge of the sidebar when a project has been
+ * soft-deleted. Sits OUTSIDE the scrollable .app-projects-list so it
+ * never clips or scrolls away with the list. The countdown bar at the
+ * bottom is driven by a motion scaleX animation. */
+.app-sidebar-undo {
+  position: relative;
+  margin: 8px;
+  padding: 0;
+  background: var(--color-ink, #1a1a1a);
+  color: var(--color-paper, #fff);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(15, 12, 8,0.18), 0 2px 6px rgba(15, 12, 8,0.08);
+  overflow: hidden;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  flex-shrink: 0;
+}
+
+.app-sidebar-undo-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px 14px;
+}
+
+.app-sidebar-undo-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: oklch(90% 0 0);
+}
+
+.app-sidebar-undo-label strong {
+  color: var(--color-paper, #fff);
+  font-weight: 500;
+}
+
+.app-sidebar-undo-btn {
+  background: none;
+  border: none;
+  color: var(--color-accent, #1B365D);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+  flex-shrink: 0;
+}
+
+.app-sidebar-undo-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.app-sidebar-undo-bar {
+  height: 2px;
+  background: var(--color-accent, #1B365D);
+  transform-origin: left center;
+  opacity: 0.85;
+}
+
+/* ============================================
+   MAIN CONTENT — CARD GRID
+   ============================================ */
+
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--color-paper);
+}
+
+.app-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  align-content: start;
+}
+
+/* Right-pane placeholder shown while the active project's files are being
+   listed (filesStatus === 'pending' | 'loading') or the listing failed
+   ('error'). Sidebar always renders alongside it. */
+.app-grid-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  font-family: var(--font-body);
+}
+
+/* Sidebar inline status row — shown while projectsStatus is loading or
+   in an error state. Single-line, muted, sits above the (empty) project
+   list so the user gets feedback before the list populates. */
+.app-sidebar-status {
+  padding: var(--spacing-sm) var(--spacing-md);
+  color: var(--text-tertiary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+/* Inline retry buttons — text-style links inside the loading/error
+   placeholders. Same shape in the sidebar status row and the right-pane
+   error block. */
+.app-sidebar-retry,
+.app-grid-retry {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.app-sidebar-retry:hover,
+.app-grid-retry:hover {
+  text-decoration: none;
+}
+
+/* ============================================
+   WELCOME SCREEN (no project selected)
+   ============================================
+   Three-step editorial onboarding shown in the right pane when
+   activeProject === null. Uses Cormorant Garamond italic for the tagline
+   and step titles, Instrument Sans for the body, and the same accent
+   color the landing hero CTA uses. */
+
+/* ============================================
+   INIT OVERLAY — full-screen during project load
+   z-index just below grain so texture bleeds through
+   ============================================ */
+
+.app-init-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-paper);
+}
+
+.app-init-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.app-init-overlay-title {
+  font-family: var(--font-display);
+  font-size: clamp(3rem, 8vw, 5rem);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  color: var(--color-ink);
+  margin: 0;
+}
+
+.app-init-overlay-line {
+  height: 1px;
+  background: var(--color-accent);
+  animation: init-line-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes init-line-breathe {
+  0%, 100% { width: 48px; opacity: 0.35; }
+  50% { width: 120px; opacity: 1; }
+}
+
+.app-init-overlay-status {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-charcoal);
+  opacity: 0.5;
+  margin: 0;
+}
+
+/* ============================================
+   WELCOME SCREEN
+   ============================================ */
+
+.app-welcome {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  overflow-y: auto;
+}
+
+.app-welcome-inner {
+  max-width: 880px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.app-welcome-tagline {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 3.5vw, 2.75rem);
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-charcoal);
+  margin: 0 0 var(--spacing-2xl) 0;
+}
+
+.app-welcome-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-xl);
+  width: 100%;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--spacing-2xl) 0;
+}
+
+.app-welcome-step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.app-welcome-step-num {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  font-variant: all-small-caps;
+  color: var(--color-accent);
+  margin-bottom: var(--spacing-xs);
+}
+
+.app-welcome-step-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.2;
+  color: var(--color-ink);
+  margin: 0 0 var(--spacing-xs) 0;
+}
+
+.app-welcome-step-body {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-charcoal);
+  opacity: 0.75;
+  margin: 0;
+}
+
+.app-welcome-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.app-welcome-cta-button {
+  display: inline-block;
+  padding: var(--spacing-sm) var(--spacing-xl);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-paper);
+  background: var(--color-ink);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.app-welcome-cta-button:hover {
+  transform: translateY(-2px);
+  background: var(--color-accent);
+}
+
+.app-welcome-cta-hint {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  color: var(--color-charcoal);
+  opacity: 0.6;
+  margin: 0;
+}
+
+/* Single-line in-flight state shown while the dropped file's new project
+   is being provisioned. Replaces the steps + CTA so the welcome screen
+   doesn't sit silent during the ~10-15s agent computer boot. */
+.app-welcome-creating {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--color-charcoal);
+  opacity: 0.7;
+  margin: 0;
+  /* Match the vertical position the steps grid occupied so there's no
+     layout jump when the user drops a file. */
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .app-welcome-steps {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  .app-welcome-step {
+    align-items: center;
+    text-align: center;
+  }
+}
+
+/* ============================================
+   FILE CARDS
+   ============================================ */
+
+.app-card {
+  background: var(--color-paper);
+  border: 1px solid var(--color-mist);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: border-color var(--duration-base) var(--ease-out),
+              box-shadow var(--duration-base) var(--ease-out),
+              transform var(--duration-base) var(--ease-out);
+}
+
+.app-card:hover {
+  border-color: var(--color-accent);
+  box-shadow: 0 2px 12px rgba(15, 12, 8,0.06);
+  transform: translateY(-2px);
+}
+
+/* Hover-only delete button — top-right of the thumbnail. */
+.app-card-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-mist);
+  border-radius: 50%;
+  background: var(--color-paper);
+  color: var(--color-ash);
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+  z-index: 3;
+}
+
+.app-card:hover .app-card-delete,
+.app-card-delete:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.app-card-delete:hover {
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.app-card-delete:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* In-card cancel button — only rendered for running task cards. Always
+ * visible (no hover reveal like delete) because you're actively watching
+ * the task cook and need to stop it without hunting. Red-tinted to read
+ * as a destructive interrupt. Matches .app-card-delete's geometry so the
+ * two never clash — only one is present on a given card at a time. */
+.app-card-cancel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid oklch(55% 0.2 25 / 0.35);
+  border-radius: 50%;
+  background: var(--color-paper);
+  color: oklch(55% 0.2 25);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+  z-index: 3;
+}
+
+.app-card-cancel:hover:not(:disabled) {
+  color: var(--color-paper);
+  background: oklch(55% 0.2 25);
+  border-color: oklch(55% 0.2 25);
+  transform: scale(1.05);
+}
+
+.app-card-cancel:focus-visible {
+  outline: 2px solid oklch(55% 0.2 25);
+  outline-offset: 2px;
+}
+
+.app-card-cancel:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.app-card-cancel-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid oklch(55% 0.2 25 / 0.25);
+  border-top-color: oklch(55% 0.2 25);
+  border-radius: 50%;
+  animation: bench-spin 0.8s linear infinite;
+}
+
+/* Download button — mirrors .app-card-delete geometry and hover-reveal.
+ * When both are present on the same card, download sits one slot to the
+ * left of delete via the --with-delete modifier. */
+.app-card-download {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-mist);
+  border-radius: 50%;
+  background: var(--color-paper);
+  color: var(--color-ash);
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.92);
+  transition: opacity var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+  z-index: 3;
+}
+
+.app-card-download--with-delete {
+  right: 40px;
+}
+
+.app-card:hover .app-card-download,
+.app-card-download:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.app-card-download:hover:not(:disabled) {
+  color: var(--color-paper);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.app-card-download:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.app-card-download:disabled {
+  cursor: progress;
+  opacity: 1;
+}
+
+.app-card:hover .app-card-download:disabled,
+.app-card-download:disabled {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.app-card-download-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--color-mist);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: bench-spin 0.8s linear infinite;
+}
+
+.app-card-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-cream);
+  overflow: hidden;
+}
+
+.app-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.app-card-thumb-icon {
+  color: var(--color-ash);
+  opacity: 0.4;
+}
+
+/* HTML thumbs render the real page via the same file-server iframe as
+   PageViewer, scaled down to fit the card. `sandbox=""` (set on the
+   iframe) blocks scripts so the thumbnail is a passive render. */
+.app-card-thumb-html {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #ffffff;
+}
+.app-card-thumb-html-frame {
+  display: block;
+  width: 1024px;
+  height: 768px;
+  border: 0;
+  background: #ffffff;
+  transform: scale(0.32);
+  transform-origin: top left;
+  pointer-events: none;
+}
+
+/* PDF thumbs render a real first page; anchor it to the top so titles
+   are visible (the page is taller than the 4:3 card and would otherwise
+   be center-cropped to whitespace). */
+.app-card-thumb-pdf {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: hidden;
+}
+
+.app-card-thumb-pdf .react-pdf__Page,
+.app-card-thumb-pdf .react-pdf__Page__canvas {
+  display: block;
+  max-width: 100%;
+}
+
+/* DOCX thumbs render the document via docx-preview at native paper size,
+   then scale-to-fit the card width and clip overflow so only the top is
+   visible. Same anchor-top trick as PDF — title and opening paragraphs
+   stay visible instead of being center-cropped to whitespace.
+
+   The .pages layer holds docx-preview's imperative output; the .fallback
+   layer overlays the icon while the doc is loading and after a parse
+   failure (Suspense doesn't catch runtime errors). */
+.app-card-thumb-docx {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-paper);
+}
+
+.app-card-thumb-docx-pages {
+  width: 100%;
+  height: 100%;
+}
+
+.app-card-thumb-docx-pages .docx-wrapper {
+  background: transparent !important;
+  padding: 0 !important;
+  /* Native US Letter is ~816px wide. Scale that down to the card width
+     (4:3 card, ~280px in the grid) so the page fits horizontally. */
+  transform: scale(0.34);
+  transform-origin: top left;
+  width: 816px;
+}
+
+.app-card-thumb-docx-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-cream);
+}
+
+/* XLSX thumbs render the first sheet's table via SheetJS sheet_to_html,
+   anchored to the top-left so the header row and first data rows are
+   visible. Compact font + tight cell padding fit more rows into the card. */
+.app-card-thumb-xlsx {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-paper);
+  font-family: var(--font-body);
+  font-size: 0.5rem;
+  color: var(--color-ink);
+}
+
+.app-card-thumb-xlsx table {
+  border-collapse: collapse;
+  width: max-content;
+}
+
+.app-card-thumb-xlsx td,
+.app-card-thumb-xlsx th {
+  border: 1px solid var(--color-mist);
+  padding: 2px 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+  vertical-align: top;
+}
+
+.app-card-thumb-xlsx th {
+  background: var(--color-cream);
+  font-weight: 600;
+  text-align: left;
+}
+
+/* PPTX thumbs render extracted slide text, clipped to the card box */
+.app-card-thumb-pptx {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--color-paper);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.app-card-thumb-pptx-slide {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  min-width: 0;
+}
+.app-card-thumb-pptx-num {
+  flex-shrink: 0;
+  font-family: var(--font-mono, 'Space Grotesk', monospace);
+  font-size: 0.5rem;
+  color: var(--color-ash, #999);
+  line-height: 1.4;
+}
+.app-card-thumb-pptx-text {
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.5rem;
+  line-height: 1.4;
+  color: var(--color-ink, #1a1a1a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* HTML thumbs render the document in a fully sandboxed srcDoc iframe sized
+   to a native desktop width (1024px), then scaled down to the card width
+   and anchored top-left. Same pattern as docx/xlsx — the top of the page
+   (header, hero, first paragraphs) stays visible instead of being
+   center-cropped to whitespace. The fallback icon stays visible while the
+   file is fetching and after any error. */
+.app-card-info {
+  padding: 12px;
+}
+
+.app-card-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-card-meta {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-ash);
+  margin-top: 2px;
+}
+
+/* ============================================
+   UPLOAD CARD
+   ============================================ */
+
+.app-card--upload {
+  border: 2px dashed var(--color-mist);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  background: transparent;
+}
+
+.app-card--upload:hover {
+  border-color: var(--color-ash);
+  box-shadow: none;
+  transform: none;
+}
+
+.app-card--upload.is-dragover {
+  border-color: var(--color-accent);
+  border-style: solid;
+  background: var(--color-accent-dim);
+}
+
+.app-dropzone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--spacing-md);
+  text-align: center;
+}
+
+.app-dropzone-icon {
+  color: var(--color-ash);
+  margin-bottom: 4px;
+}
+
+.app-dropzone-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--color-ink);
+}
+
+.app-dropzone-subtitle {
+  font-size: 0.8125rem;
+  color: var(--color-ash);
+}
+
+.app-dropzone-browse {
+  background: none;
+  border: none;
+  color: var(--color-accent);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+}
+
+.app-dropzone-browse:hover {
+  color: var(--color-accent-hover);
+}
+
+.app-dropzone-hint {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-ash);
+  margin-top: 2px;
+}
+
+/* ============================================
+   SPRING ANIMATION OVERRIDES
+   ============================================ */
+
+/* Let JS handle transforms instead of CSS transitions */
+.app-card-grid.spring-ready .app-card {
+  transition-property: border-color, box-shadow;
+}
+
+.app-card-grid.spring-ready .app-card:not(.app-card--upload) {
+  cursor: zoom-in;
+}
+
+/* ============================================
+   BENCH MODE
+   ============================================ */
+
+.app-main.bench-mode {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Carousel strip */
+.app-card-grid.bench-carousel {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.app-card-grid.bench-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* upload card in carousel — compact icon-only version */
+.bench-carousel .app-card--upload {
+  width: 80px;
+  min-height: 80px;
+  max-height: 80px;
+  opacity: 0.5;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bench-carousel .app-card--upload .app-dropzone-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.bench-carousel .app-card--upload .app-dropzone-title,
+.bench-carousel .app-card--upload .app-dropzone-subtitle,
+.bench-carousel .app-card--upload .app-dropzone-hint {
+  display: none;
+}
+
+.bench-carousel .app-card {
+  flex: 0 0 auto;
+  width: 120px;
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity var(--duration-base) var(--ease-out),
+              border-color var(--duration-base) var(--ease-out);
+  /* New result write-in — calm scale + fade for any card mounting in the carousel */
+  animation: bench-result-arrive 0.5s var(--ease-out) both;
+}
+
+@keyframes bench-result-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(4px);
+  }
+  to {
+    opacity: 0.5;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.bench-carousel .app-card:hover {
+  opacity: 1;
+  border-color: var(--color-ash);
+  box-shadow: none;
+}
+
+/* Compact delete button for the carousel filmstrip — slightly smaller to fit
+   the 120px-wide cards without crowding the thumbnail. */
+.bench-carousel .app-card-delete {
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+}
+
+.bench-carousel .app-card.bench-selected {
+  opacity: 1;
+  border-color: var(--color-accent);
+  box-shadow: 0 2px 12px rgba(15, 12, 8,0.08);
+}
+
+/* Carousel cards show a compact, single-line filename below the thumb so
+   non-image types (which all share the same generic icon) remain
+   distinguishable. The size meta line is dropped — redundant in the strip. */
+.bench-carousel .app-card .app-card-info {
+  padding: 6px 8px 8px;
+  text-align: center;
+}
+
+.bench-carousel .app-card .app-card-name {
+  font-size: 0.6875rem;
+  font-weight: 500;
+}
+
+.bench-carousel .app-card .app-card-meta {
+  display: none;
+}
+
+/* ============================================
+   BENCH MODE — React components
+   ============================================ */
+
+.bench-mode-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  /* Subtle calm entrance — like a fresh page sliding in */
+  animation: bench-enter 0.42s var(--ease-out) both;
+}
+
+/* Fullscreen mode — the bench lifts out of its normal slot and covers the
+   entire viewport. Sidebar and page chrome stay mounted but are visually
+   covered; Esc (handled in BenchMode) collapses back to docked layout. */
+.bench-mode-container.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--color-paper);
+  animation: none;
+}
+
+/* The prompt bay is hidden in fullscreen so the document owns the entire
+   screen. As soon as the user captures anything (crop / draw / marker /
+   segment), BenchMode auto-exits fullscreen and the prompt slides back
+   into view with the newly inserted chip already in it. */
+.bench-mode-container.is-fullscreen .bench-prompt {
+  display: none;
+}
+
+.bench-fullscreen-btn {
+  flex: 0 0 auto;
+}
+
+@keyframes bench-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Editor viewport — wraps the type-specific editor (image, pdf, ...).
+ * Children stretch to fill so their internal scroll containers can claim a bounded height. */
+.bench-editor-viewport {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-cream);
+  overflow: hidden;
+  /* The viewport scales in just slightly behind the container — gives a "page settling" feel */
+  animation: bench-viewport-enter 0.5s var(--ease-out) both;
+  animation-delay: 60ms;
+}
+
+@keyframes bench-viewport-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.bench-editor-empty {
+  color: var(--color-ash);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+}
+
+/* Image editor (draw mode) */
+.bench-image-editor {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Unified bench editor toolbar
+   ─────────────────────────────────────────────────────────────────────────
+   One toolbar shell shared by every editor (image, PDF, future formats).
+   Layout left → right:
+     [back chip]  [mode toggle]  [tool options]  [hint]  ─spacer→  [secondary actions]  [view controls]  [primary action]
+   The capture / commit button (`bench-capture-btn`) always sits at the far
+   right edge, regardless of file type, via the spacer in the middle.            */
+.bench-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--color-mist);
+  background: var(--color-paper);
+  flex-shrink: 0;
+  min-height: 52px;
+}
+
+/* Instructional hint — sits after the mode/tool cluster, calm primary weight */
+.bench-editor-toolbar-hint {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  letter-spacing: 0.005em;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Pushes everything after it to the right edge of the bar */
+.bench-editor-toolbar-spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+/* Slim contextual strip inside the editor body. Used by image / PDF
+ * now that mode buttons are portaled into the Bench subbar — leaves
+ * only mode-specific controls (DrawToolbar, Undo/Clear, PDF zoom /
+ * page nav) here. Empty state is `display: none` via :empty. */
+.bench-editor-contextbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-bottom: 1px solid var(--color-mist);
+  background: var(--color-paper);
+  flex-shrink: 0;
+  min-height: 36px;
+}
+.bench-editor-contextbar:empty { display: none; }
+
+.bench-image-editor-stage {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-content: safe center;
+  padding: 24px;
+  overflow: auto;
+  background: var(--color-cream);
+}
+
+.bench-image-editor-frame {
+  position: relative;
+  display: block;
+}
+
+.bench-image-editor-img {
+  display: block;
+  max-width: 100%;
+  /* No max-height — let the stage scroll vertically when the image is tall */
+  border-radius: 4px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Shared draw primitives */
+.bench-mask-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.bench-editor-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-ash);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+}
+
+.bench-editor-btn:hover:not(:disabled) {
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+.bench-editor-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.bench-editor-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bench-editor-btn.is-active {
+  background: var(--color-cream);
+  color: var(--color-accent);
+}
+
+/* Mode toggle — segmented control with a sliding active indicator.
+ * Supports N segments via data-count + data-mode-index. The ::before pill
+ * is sized as a share of the group width and slid with translateX(N*100%). */
+.bench-mode-group {
+  position: relative;
+  display: inline-flex;
+  gap: 0;
+  padding: 3px;
+  background: var(--color-cream);
+  border: 1px solid var(--color-mist);
+  border-radius: 9px;
+  flex-shrink: 0;
+  isolation: isolate;
+}
+
+.bench-mode-group::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  background: var(--color-paper);
+  border-radius: 6px;
+  box-shadow: 0 1px 0 oklch(0% 0 0 / 0.04), 0 1px 3px oklch(0% 0 0 / 0.06);
+  transition: transform 0.24s var(--ease-out);
+  pointer-events: none;
+  transform: translateX(0);
+}
+
+.bench-mode-group[data-count="3"]::before {
+  width: calc(33.333% - 2px);
+}
+
+.bench-mode-group[data-count="4"]::before {
+  width: calc(25% - 1.5px);
+}
+
+.bench-mode-group[data-mode-index="1"]::before {
+  transform: translateX(100%);
+}
+
+.bench-mode-group[data-mode-index="2"]::before {
+  transform: translateX(200%);
+}
+
+.bench-mode-group[data-mode-index="3"]::before {
+  transform: translateX(300%);
+}
+
+.bench-mode-btn {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  height: 30px;
+  padding: 0 14px;
+  gap: 7px;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 6px;
+  color: var(--color-ash);
+  background: transparent;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.bench-mode-btn:hover:not(.is-active) {
+  color: var(--color-ink);
+}
+
+.bench-mode-btn.is-active {
+  color: var(--color-accent);
+}
+
+.bench-mode-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.bench-mode-btn span {
+  letter-spacing: 0.01em;
+}
+
+/* Capture markers — pill in the chip family, filled accent variant
+ * to mark its role as the primary action of the marker workflow. */
+.bench-capture-btn {
+  width: auto;
+  height: 30px;
+  padding: 0 14px;
+  gap: 7px;
+  background: var(--color-accent);
+  color: var(--color-paper);
+  border: 1px solid var(--color-accent);
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  transition: background var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+}
+
+.bench-capture-btn:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+  color: var(--color-paper);
+  transform: translateY(-1px);
+}
+
+.bench-capture-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Marker overlay — catches clicks, renders pins */
+.bench-marker-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+}
+
+.bench-marker-pin-wrap {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.bench-marker-pin {
+  width: 28px;
+  height: 28px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #1B365D;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(15, 12, 8,0.3);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bench-marker-pin > * {
+  transform: rotate(45deg);
+}
+
+.bench-marker-pin:hover {
+  background: #e03131;
+}
+
+.bench-marker-label {
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  background: rgba(15, 12, 8,0.75);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  outline: none;
+  min-width: 60px;
+  max-width: 140px;
+  text-align: center;
+}
+
+.bench-marker-label::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.bench-marker-label:focus {
+  background: rgba(15, 12, 8,0.9);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+/* Crop overlay — catches drag events, shows the selection rectangle */
+.bench-crop-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  touch-action: none;
+  user-select: none;
+}
+
+.bench-crop-rect {
+  position: absolute;
+  border: 1px solid var(--color-paper);
+  outline: 1px dashed var(--color-ink);
+  /* Huge spread shadow acts as a dimming mask around the selection. */
+  box-shadow: 0 0 0 9999px oklch(0% 0 0 / 0.45);
+  pointer-events: none;
+}
+
+/* Floating "Add crop" action — anchored to the rect's bottom-right corner in
+ * **viewport** coordinates (`position: fixed`) so editor-stage scroll bars
+ * cannot clip it. Inherits color/shape from .bench-capture-btn (rose pill). */
+.bench-crop-apply-btn {
+  position: fixed;
+  z-index: 999;
+  /* Lift it off the page slightly so it reads as floating above the canvas */
+  box-shadow: 0 4px 14px oklch(0% 0 0 / 0.22),
+              0 1px 2px oklch(0% 0 0 / 0.12);
+  /* Soft entrance so it doesn't pop hard the moment the user releases the drag */
+  animation: bench-crop-apply-enter 0.18s var(--ease-out) both;
+}
+
+@keyframes bench-crop-apply-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bench-crop-apply-btn {
+    animation: none !important;
+  }
+}
+
+.bench-editor-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  pointer-events: none;
+  z-index: 10;
+  animation: bench-flash 0.25s ease-out forwards;
+}
+
+@keyframes bench-flash {
+  0% { opacity: 0; }
+  40% { opacity: 0.8; }
+  100% { opacity: 0; }
+}
+
+/* Draw toolbar (color + size picker) */
+.bench-draw-toolbar {
+  position: relative;
+  display: inline-flex;
+}
+
+.bench-draw-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--color-mist);
+  cursor: pointer;
+  padding: 0;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.bench-draw-swatch:hover {
+  border-color: var(--color-ink);
+}
+
+.bench-draw-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  padding: 10px;
+  background: var(--color-paper);
+  border: 1px solid var(--color-mist);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(15, 12, 8,0.1);
+}
+
+.bench-draw-colors {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.bench-draw-color {
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.bench-draw-color:hover {
+  background: var(--color-cream);
+}
+
+.bench-draw-color.is-selected {
+  background: var(--color-cream);
+  box-shadow: inset 0 0 0 1px var(--color-ash);
+}
+
+.bench-draw-color span {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.bench-draw-sizes {
+  display: flex;
+  gap: 4px;
+}
+
+.bench-draw-size {
+  flex: 1;
+  height: 26px;
+  min-width: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-ash);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+}
+
+.bench-draw-size:hover {
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+.bench-draw-size.is-selected {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+/* Placeholder view (for unsupported/upcoming file types) */
+/* Blank-state editor for file types without a real preview yet.
+ * Intentionally minimal: type icon, filename, type label. No copy. */
+/* Outer wrapper for the placeholder editor (archive/zip, presentation,
+ * fallback). Hosts the shared .bench-editor-toolbar on top and the
+ * centered preview below. */
+.bench-placeholder-editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bench-placeholder-view {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 48px;
+  text-align: center;
+}
+
+.bench-placeholder-thumb {
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-ash);
+  opacity: 0.5;
+}
+
+.bench-placeholder-thumb svg,
+.bench-placeholder-thumb .app-card-thumb-icon {
+  width: 56px;
+  height: 56px;
+}
+
+.bench-placeholder-thumb .app-card-thumb-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.bench-placeholder-name {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: var(--color-ash);
+}
+
+.bench-placeholder-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+
+/* Presentation editor — Google Drive iframe preview */
+.bench-pres-preview {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.bench-pres-iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+.bench-pres-preview-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 20px;
+  border: 1px solid var(--color-mist, #e0dcd7);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--color-ink, #1a1a1a);
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.bench-pres-preview-btn:hover {
+  border-color: var(--color-accent, #1B365D);
+  color: var(--color-accent, #1B365D);
+}
+.bench-pres-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  color: var(--color-ash, #999);
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.8125rem;
+}
+.bench-pres-error-msg {
+  color: oklch(55% 0.2 25);
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.8125rem;
+  margin: 8px 0;
+}
+
+/* PPTX text extraction view */
+.bench-pptx-text-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 32px 40px;
+}
+.bench-pptx-text-loading,
+.bench-pptx-text-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px;
+  color: var(--color-ash, #999);
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.8125rem;
+}
+.bench-pptx-text-error {
+  padding: 48px;
+  text-align: center;
+  color: oklch(55% 0.2 25);
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.8125rem;
+}
+.bench-pptx-slide {
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--color-mist, #e0dcd7);
+}
+.bench-pptx-slide:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.bench-pptx-slide-number {
+  font-family: var(--font-mono, 'Space Grotesk', monospace);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-ash, #999);
+  margin-bottom: 10px;
+}
+.bench-pptx-slide-text {
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--color-ink, #1a1a1a);
+  margin: 0 0 6px;
+}
+.bench-pptx-slide-empty {
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.8125rem;
+  font-style: italic;
+  color: var(--color-mist, #e0dcd7);
+  margin: 0;
+}
+
+/* Audio + Video editor — native player + timeline reference strip */
+.bench-media-editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-cream);
+}
+
+.bench-media-editor-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px;
+  overflow: auto;
+}
+
+.bench-media-player {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 720px;
+}
+
+.bench-media-player--audio audio {
+  width: 100%;
+  min-width: 320px;
+}
+
+.bench-media-player--video video {
+  display: block;
+  width: 100%;
+  max-height: calc(100vh - 360px);
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(15, 12, 8,0.08);
+  background: #000;
+}
+
+.bench-media-timeline {
+  width: 100%;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  user-select: none;
+}
+
+.bench-media-timeline-track {
+  position: relative;
+  height: 48px;
+  border-radius: 6px;
+  background: var(--color-paper);
+  border: 1px solid var(--color-mist);
+  cursor: crosshair;
+  touch-action: none;
+  overflow: hidden;
+}
+
+.bench-media-timeline-track:hover {
+  border-color: var(--color-ash);
+}
+
+/* Waveform canvas — full size, sits underneath all the other layers.
+ * The fill color is read via getComputedStyle(canvas).color in the draw
+ * function, so theming the waveform = setting the CSS color here. */
+.bench-media-timeline-waveform {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: rgba(29, 29, 29, 0.32);
+}
+
+.bench-media-timeline-playhead {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--color-ink);
+  border-radius: 1px;
+  pointer-events: none;
+  transition: left var(--duration-fast) linear;
+}
+
+.bench-media-timeline-selection {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--color-accent);
+  opacity: 0.25;
+  border-left: 2px solid var(--color-accent);
+  border-right: 2px solid var(--color-accent);
+  pointer-events: none;
+}
+
+/* Hover line — follows the cursor across the track */
+.bench-media-timeline-hover {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-accent);
+  opacity: 0.55;
+  pointer-events: none;
+  transform: translateX(-0.5px);
+}
+
+/* Hover label — shows the time at the cursor position. Positioned above
+ * the track and centered on the cursor; CSS transform handles the centering. */
+.bench-media-timeline-hover-label {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  padding: 2px 6px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.bench-media-timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-ash);
+}
+
+.bench-media-timeline-label {
+  font-variant-numeric: tabular-nums;
+}
+
+.bench-media-timeline-hint {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--color-mist);
+}
+
+.bench-media-error {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-accent);
+  text-align: center;
+  padding: 12px 16px;
+  border: 1px dashed var(--color-mist);
+  border-radius: 6px;
+  max-width: 720px;
+}
+
+/* PDF viewer */
+.bench-pdf-viewer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+/* PDF toolbar shell uses the shared .bench-editor-toolbar — only the PDF-specific
+ * scale label, page indicator, and nav cluster need their own rules. */
+.bench-pdf-toolbar-scale {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-ash);
+  min-width: 3rem;
+  text-align: center;
+}
+
+.bench-pdf-toolbar-pages {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-ash);
+  min-width: 3rem;
+  text-align: center;
+}
+
+.bench-pdf-toolbar-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.bench-pdf-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* react-pdf's <Document> wrapper — give it flex semantics so scroll cascades */
+.bench-pdf-document {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.bench-pdf-page-stage {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px;
+  background: var(--color-cream);
+}
+
+.bench-pdf-page-container {
+  position: relative;
+  display: inline-block;
+  box-shadow: 0 2px 12px rgba(15, 12, 8,0.08);
+  background: var(--color-paper);
+}
+
+.bench-pdf-thumbs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-mist);
+  background: var(--color-paper);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.bench-pdf-thumb {
+  flex-shrink: 0;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
+}
+
+.bench-pdf-thumb:hover {
+  opacity: 1;
+  border-color: var(--color-mist);
+}
+
+.bench-pdf-thumb.is-active {
+  opacity: 1;
+  border-color: var(--color-accent);
+}
+
+.bench-pdf-thumb-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  background: var(--color-cream);
+}
+
+.bench-pdf-thumb-placeholder {
+  width: 48px;
+  height: 64px;
+  background: var(--color-mist);
+  opacity: 0.3;
+}
+
+.bench-pdf-thumb-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--color-ash);
+  line-height: 1.2;
+}
+
+.bench-pdf-loading {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+}
+
+.bench-pdf-error {
+  color: var(--color-accent);
+  font-size: 0.875rem;
+  padding: 16px;
+  text-align: center;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   DOCX viewer — same toolbar shell as PDF/image, but the body is the
+   docx-preview wrapper (a stack of <section.docx> page elements).
+   ───────────────────────────────────────────────────────────────────────── */
+.bench-docx-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.bench-docx-stage {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+  background: var(--color-cream);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.bench-docx-frame {
+  position: relative;
+  /* docx-preview emits page sections sized in the doc's native units; let
+   * them dictate width and just drop a paper-card shadow under the stack. */
+  flex: 0 0 auto;
+}
+
+.bench-docx-doc {
+  /* docx-preview's own .docx-wrapper / .docx classes handle page sizing,
+   * margins, and column flow. We just give the wrapper a card surface so
+   * it reads as paper against the cream stage. */
+  background: var(--color-paper);
+  box-shadow: 0 2px 12px rgba(15, 12, 8,0.08);
+  /* Selecting text inside the doc would interfere with crop drag, and the
+   * crop overlay is the primary interaction here. */
+  user-select: none;
+}
+
+.bench-docx-doc .docx-wrapper {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Plain-text mode (.txt / .md) — paper card with monospace body, sized
+ * to a comfortable reading width so the crop overlay has real bounds. */
+.bench-docx-doc.is-text {
+  width: min(816px, 80vw);
+  padding: 56px 64px;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--color-ink);
+}
+
+.bench-docx-doc.is-text pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   XLSX viewer — SheetJS-rendered tables with a tab strip per sheet.
+   ───────────────────────────────────────────────────────────────────────── */
+.bench-xlsx-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.bench-xlsx-stage {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+  background: var(--color-cream);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.bench-xlsx-sheet-frame {
+  position: relative;
+  flex: 0 0 auto;
+  background: var(--color-paper);
+  box-shadow: 0 2px 12px rgba(15, 12, 8,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bench-xlsx-table-host {
+  /* Establishes the CropOverlay coordinate space — width/height come from
+   * the inner <table>, and the overlay's ResizeObserver tracks them. */
+  display: inline-block;
+}
+
+.bench-xlsx-table-host table {
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  color: var(--color-ink);
+  background: var(--color-paper);
+}
+
+.bench-xlsx-table-host td,
+.bench-xlsx-table-host th {
+  border: 1px solid var(--color-mist);
+  padding: 6px 10px;
+  min-width: 64px;
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.bench-xlsx-table-host th {
+  background: var(--color-cream);
+  font-weight: 600;
+  text-align: left;
+}
+
+.bench-xlsx-tabs {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  border-top: 1px solid var(--color-mist);
+  background: var(--color-paper);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.bench-xlsx-tab {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-ash);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  transition: background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out);
+}
+
+.bench-xlsx-tab:hover {
+  background: var(--color-cream);
+  color: var(--color-ink);
+}
+
+.bench-xlsx-tab.is-active {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-color: var(--color-ink);
+}
+
+/* ============================================
+   RENDERED-HTML EDITOR SHELL — shared layout
+   Used by HTML, DOCX, and XLSX adapters via
+   RenderedHtmlEditor. Outer column, scrollable
+   stage, identical toolbar slot. Each adapter's
+   own .bench-{html,docx,xlsx}-frame class
+   handles content-specific framing inside.
+   ============================================ */
+
+.bench-rendered-html-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.bench-rendered-html-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+  background: var(--color-cream);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Loading indicator that overlays the stage while an adapter is still
+   fetching/parsing — sits on top of the (empty) body so docRef stays
+   mounted but the user sees a spinner instead of an empty paper card. */
+.bench-rendered-html-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-cream);
+  z-index: 2;
+}
+
+/* ============================================
+   HTML VIEWER — sandboxed iframe + crop
+   Mirrors the xlsx layout: outer stage scrolls,
+   inner frame is sized to the iframe's intrinsic
+   content height so the CropOverlay can target
+   the full document (no scroll translation).
+   ============================================ */
+
+.bench-html-viewer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+.bench-html-stage {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 24px;
+  background: var(--color-cream);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.bench-html-frame {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(960px, 100%);
+  background: #ffffff;
+  box-shadow: 0 2px 12px rgba(15, 12, 8,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bench-html-iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #ffffff;
+}
+
+/* ============================================
+   PROMPT BAY — bottom action zone
+   Two-tier rhythm: suggestions (loose) sit
+   above an input surface (primary), with the
+   Adit button anchored at the input's edge.
+   ============================================ */
+
+.bench-prompt {
+  flex-shrink: 0;
+  border-top: 1px solid var(--color-mist);
+  padding: 22px 32px 12px;
+  background: var(--color-paper);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  /* Slide up after the editor settles */
+  animation: bench-prompt-enter 0.42s var(--ease-out) both;
+  animation-delay: 120ms;
+}
+
+@keyframes bench-prompt-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Suggestions tier ────────────────────── */
+
+.bench-prompt-templates {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex-shrink: 0;
+  /* Small breathing room so chip outlines don't clip the scroll edge */
+  padding: 2px 0;
+}
+
+.bench-prompt-templates::-webkit-scrollbar {
+  display: none;
+}
+
+.bench-prompt-template-chip {
+  flex: 0 0 auto;
+  padding: 9px 16px;
+  border: 1px solid var(--color-mist);
+  border-radius: 999px;
+  background: var(--color-cream);
+  color: var(--color-charcoal, var(--color-ink));
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+  /* Staggered entrance — each chip lifts in slightly after the previous */
+  animation: bench-chip-enter 0.36s var(--ease-out) both;
+}
+
+/* Stagger via nth-child — six steps, then idempotent. Caps at 8 to keep CSS small. */
+.bench-prompt-template-chip:nth-child(1) { animation-delay: 200ms; }
+.bench-prompt-template-chip:nth-child(2) { animation-delay: 240ms; }
+.bench-prompt-template-chip:nth-child(3) { animation-delay: 280ms; }
+.bench-prompt-template-chip:nth-child(4) { animation-delay: 320ms; }
+.bench-prompt-template-chip:nth-child(5) { animation-delay: 360ms; }
+.bench-prompt-template-chip:nth-child(6) { animation-delay: 400ms; }
+.bench-prompt-template-chip:nth-child(7) { animation-delay: 440ms; }
+.bench-prompt-template-chip:nth-child(8) { animation-delay: 480ms; }
+
+@keyframes bench-chip-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bench-prompt-template-chip:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: var(--color-accent-dim);
+  transform: translateY(-1px);
+}
+
+.bench-prompt-template-chip:active {
+  transform: translateY(1px);
+  transition-duration: 0.05s;
+}
+
+.bench-prompt-template-chip:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ── Input tier ──────────────────────────── */
+
+.bench-prompt-editor-container {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 8px 8px 8px 4px;
+  border: 1px solid var(--color-mist);
+  border-radius: 14px;
+  background: var(--color-paper);
+  box-shadow: 0 1px 0 oklch(0% 0 0 / 0.02), 0 4px 16px oklch(0% 0 0 / 0.03);
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.bench-prompt-editor-container:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 1px 0 oklch(0% 0 0 / 0.02),
+              0 4px 16px oklch(0% 0 0 / 0.04),
+              0 0 0 3px var(--color-accent-dim);
+}
+
+.bench-prompt-input-wrap {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.bench-prompt-editable {
+  flex: 1;
+  min-height: 56px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 16px 18px;
+  border: none;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--color-ink);
+  outline: none;
+}
+
+.bench-prompt-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  transform: translateY(-50%);
+  color: var(--color-ash);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-style: italic;
+  pointer-events: none;
+  user-select: none;
+}
+
+.bench-prompt-paragraph {
+  margin: 0;
+}
+
+.bench-prompt-image-wrapper {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Image reference chip (inline in prompt) */
+/* File reference chip — inline pill inside the Lexical editor.
+ * Same chip family as .bench-prompt-template-chip; smaller scale,
+ * with a thumbnail leading the label. */
+.bench-prompt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 26px;
+  padding: 0 11px 0 5px;
+  margin: 0 3px;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  border-radius: 999px;
+  border: 1px solid var(--color-mist);
+  background: var(--color-cream);
+  cursor: default;
+  vertical-align: middle;
+  transition: color var(--duration-fast) var(--ease-out),
+              border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out);
+}
+
+.bench-prompt-chip:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  background: var(--color-accent-dim);
+}
+
+.bench-prompt-chip:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.bench-prompt-chip-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--color-mist);
+}
+
+/* Inline icon for non-image chip thumbs (PDF, doc, audio, video, html, ...) */
+.bench-prompt-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--color-ash);
+}
+
+.bench-prompt-chip-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.bench-prompt-chip:hover .bench-prompt-chip-icon {
+  color: var(--color-accent);
+}
+
+.bench-prompt-chip-name {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.005em;
+}
+
+/* Time-range chip variant — used by MediaSegmentNode */
+.bench-prompt-chip--segment .bench-prompt-chip-range {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--color-cream);
+  color: var(--color-ash);
+  margin-left: 2px;
+  letter-spacing: 0.02em;
+}
+
+.bench-prompt-chip--segment:hover .bench-prompt-chip-range {
+  background: var(--color-paper);
+  color: var(--color-accent);
+}
+
+/* Floating hover preview */
+.bench-prompt-chip-preview {
+  z-index: 100;
+  pointer-events: none;
+}
+
+.bench-prompt-chip-preview img {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(15, 12, 8,0.12), 0 2px 8px rgba(15, 12, 8,0.06);
+  border: 1px solid var(--color-mist);
+  background: var(--color-paper);
+  object-fit: contain;
+}
+
+/* Adit button — anchored inside the input bay */
+.bench-adit-btn {
+  align-self: flex-end;
+  position: relative;
+  flex-shrink: 0;
+  height: 44px;
+  padding: 0 22px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  transition: opacity var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+}
+
+.bench-adit-btn:hover:not(.is-disabled):not(.is-pending) {
+  background: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+/* Press feel — quick scale-down before transitioning into the working state */
+.bench-adit-btn:active:not(.is-disabled):not(.is-pending) {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.05s;
+}
+
+.bench-adit-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+/* Working state — calm slash sweep across the button face */
+.bench-adit-btn.is-pending::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    oklch(100% 0 0 / 0.08) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: bench-adit-sweep 1.6s var(--ease-out) infinite;
+  pointer-events: none;
+}
+
+@keyframes bench-adit-sweep {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ── Status / error band ─────────────────── */
+
+.bench-prompt-status {
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.bench-prompt-status-text {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--color-ash);
+}
+
+.bench-prompt-status-text--pending {
+  color: var(--color-ash);
+  animation: bench-status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes bench-status-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 1; }
+}
+
+.bench-prompt-status-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px 8px 12px;
+  border: 1px solid oklch(70% 0.18 25 / 0.35);
+  border-radius: 10px;
+  background: oklch(96% 0.04 25);
+  color: oklch(38% 0.18 25);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  /* Slide in from below with a quick fade — like a gentle correction tap */
+  animation: bench-error-enter 0.28s var(--ease-out) both;
+}
+
+@keyframes bench-error-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   REDUCED MOTION — calm even calmer
+   Disable bench entrance/sweep animations and
+   keep only opacity changes for state feedback.
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .bench-mode-container,
+  .bench-editor-viewport,
+  .bench-prompt,
+  .bench-prompt-template-chip,
+  .bench-prompt-status-error,
+  .bench-carousel .app-card {
+    animation: none !important;
+  }
+
+  .bench-adit-btn.is-pending::before {
+    animation: none !important;
+    background: oklch(100% 0 0 / 0.04);
+  }
+
+  .bench-mode-group::before {
+    transition: none !important;
+  }
+
+  .bench-prompt-status-text--pending {
+    animation: none !important;
+    opacity: 0.85;
+  }
+
+  .bench-adit-btn:hover:not(.is-disabled):not(.is-pending),
+  .bench-prompt-template-chip:hover {
+    transform: none !important;
+  }
+
+  .bench-back-chip-btn:hover svg {
+    transform: none !important;
+  }
+}
+
+.bench-prompt-status-error svg {
+  flex-shrink: 0;
+  color: oklch(55% 0.22 25);
+}
+
+.bench-prompt-status-error-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: 0.005em;
+}
+
+.bench-prompt-status-retry {
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 12px;
+  background: oklch(38% 0.18 25);
+  color: var(--color-paper);
+  border: none;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+}
+
+.bench-prompt-status-retry:hover {
+  background: oklch(30% 0.18 25);
+  transform: translateY(-1px);
+}
+
+.bench-prompt-status-retry:focus-visible {
+  outline: 2px solid oklch(38% 0.18 25);
+  outline-offset: 2px;
+}
+
+.bench-prompt-status-dismiss {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: oklch(45% 0.18 25);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+}
+
+.bench-prompt-status-dismiss:hover {
+  background: oklch(70% 0.18 25 / 0.18);
+  color: oklch(30% 0.18 25);
+}
+
+.bench-prompt-status-dismiss:focus-visible {
+  outline: 2px solid oklch(38% 0.18 25);
+  outline-offset: 2px;
+}
+
+/* Disabled state */
+.bench-adit-btn.is-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Pending/loading state */
+.bench-adit-btn.is-pending {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.bench-adit-btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-paper);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: bench-spin 0.8s linear infinite;
+}
+
+/* Brand label — set "Adit" in the display serif italic so it reads as a brand mark inside the system button */
+.bench-adit-btn-label {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.125rem;
+  line-height: 1;
+  letter-spacing: 0.005em;
+  /* Optical alignment — Cormorant italic ascent ≈ 13.1px, descent ≈ 0.2px for "Adit"
+     (no descenders), so the ink center sits ~6.5px above the baseline. With the
+     baseline at ~78% of the em-box, a 1px downward nudge puts the ink center on
+     the button's vertical midline (verified via canvas TextMetrics). */
+  transform: translateY(1px);
+}
+
+/* Keyboard shortcut hint — sits inside the Adit button after the label as a true keycap */
+.bench-adit-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid oklch(98% 0 0 / 0.22);
+  background: oklch(98% 0 0 / 0.06);
+  color: oklch(98% 0 0 / 0.78);
+  box-shadow: inset 0 -1px 0 oklch(0% 0 0 / 0.25),
+              0 1px 0 oklch(98% 0 0 / 0.08);
+  transition: border-color var(--duration-fast) var(--ease-out),
+              background var(--duration-fast) var(--ease-out),
+              color var(--duration-fast) var(--ease-out);
+}
+
+/* Keycap brightens when the button is hovered (accent state) */
+.bench-adit-btn:hover:not(.is-disabled):not(.is-pending) .bench-adit-kbd {
+  border-color: oklch(98% 0 0 / 0.35);
+  background: oklch(98% 0 0 / 0.12);
+  color: oklch(98% 0 0 / 0.95);
+}
+
+/* Card loading — slash sweep */
+.app-card-loading {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  background: var(--color-ink);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The "/" character */
+.app-card-loading::before {
+  content: '/';
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-paper);
+  position: relative;
+  z-index: 1;
+}
+
+/* Accent sweep that slides behind the slash */
+.app-card-loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--color-accent);
+  animation: slash-sweep 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes slash-sweep {
+  0%   { left: -100%; }
+  40%  { left: 0%; }
+  60%  { left: 0%; }
+  100% { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-card-loading::after {
+    animation: none;
+    left: 0;
+    opacity: 0.5;
+  }
+}
+
+/* Back-chip — file-identity cluster pinned to the start of every editor toolbar.
+ * Replaces the old standalone bench-header band; the bench now uses one unified bar. */
+.bench-back-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  /* Soft separator from the rest of the toolbar */
+  padding-right: 12px;
+  border-right: 1px solid var(--color-mist);
+  min-width: 0;
+}
+
+.bench-back-chip-btn svg {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.bench-back-chip-btn:hover:not(:disabled) svg {
+  transform: translateX(-2px);
+}
+
+.bench-back-chip-filename {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-ash);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 28ch;
+  /* Stay readable even if a filename has CJK / no-break content */
+  word-break: keep-all;
+}
+
+/* ============================================
+   SIGN-IN PAGE
+   ============================================ */
+
+.signin-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg);
+  color: var(--color-text);
+  position: relative;
+}
+
+.signin-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: var(--spacing-lg);
+}
+
+.signin-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.signin-header .app-logo {
+  font-size: 1.5rem;
+}
+
+.signin-header .app-logo-mark {
+  width: 36px;
+  height: 36px;
+}
+
+.signin-header .app-logo-text {
+  font-size: 1.75rem;
+  color: var(--color-text);
+}
+
+.signin-subtitle {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--color-ash);
+  margin: 0;
+}
+
+/* Clerk component overrides */
+
+.signin-clerk-root {
+  width: 100%;
+  max-width: 380px;
+}
+
+.signin-clerk-card {
+  border: 1px solid var(--color-mist) !important;
+  box-shadow: 0 4px 24px rgba(15, 12, 8,0.06) !important;
+  border-radius: 12px !important;
+}
+
+/* Theme-aware Clerk overrides — follow the design tokens, not hardcoded colors */
+.signin-page .cl-card,
+.signin-page .cl-rootBox,
+.signin-page .cl-signIn-root,
+.signin-page .cl-footer,
+.signin-page .cl-footerAction,
+.signin-page .cl-internal {
+  background: var(--color-paper) !important;
+  color: var(--color-text) !important;
+}
+.signin-page .cl-footerAction {
+  border-top-color: var(--color-mist) !important;
+}
+.signin-page .cl-socialButtonsBlockButton,
+.signin-page .cl-socialButtonsBlockButton__apple,
+.signin-page .cl-socialButtonsBlockButton__google,
+.signin-page button.cl-socialButtonsBlockButton,
+.signin-page [class*="cl-socialButtonsBlockButton"] {
+  background: var(--color-paper) !important;
+  border: 1px solid var(--color-mist) !important;
+  color: var(--color-text) !important;
+}
+.signin-page [class*="cl-socialButtonsBlockButton"]:hover {
+  background: var(--color-cream) !important;
+}
+.signin-page .cl-formFieldInput,
+.signin-page .cl-input,
+.signin-page [class*="cl-formFieldInput"],
+.signin-page input[type="email"],
+.signin-page input[type="text"],
+.signin-page input[type="password"] {
+  background: var(--color-paper) !important;
+  border: 1px solid var(--color-mist) !important;
+  color: var(--color-text) !important;
+}
+.signin-page [class*="cl-internal"] {
+  color: inherit !important;
+}
+.signin-page .cl-headerTitle,
+.signin-page .cl-headerSubtitle {
+  color: var(--color-text) !important;
+}
+.signin-page .cl-formFieldLabel {
+  color: var(--color-charcoal) !important;
+}
+.signin-page .cl-dividerLine {
+  background: var(--color-mist) !important;
+}
+.signin-page .cl-dividerText {
+  color: var(--color-ash) !important;
+}
+.signin-page .cl-footerActionText {
+  color: var(--color-ash) !important;
+}
+.signin-page .cl-footerActionLink {
+  color: var(--color-accent) !important;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .app-sidebar {
+    display: none;
+  }
+
+  .app-sidebar.is-open {
+    display: flex;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    bottom: 0;
+    z-index: 40;
+    width: 280px;
+    box-shadow: 4px 0 24px rgba(15, 12, 8,0.1);
+  }
+
+  .app-card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Confirm dialog overlay */
+.confirm-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 12, 8,0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: confirmFadeIn 0.15s ease-out;
+}
+
+@keyframes confirmFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ─── Confirmation Dialog ─── */
+.ui-dialog {
+  background: var(--color-paper, #fff);
+  border: 1px solid var(--color-mist, #e5e5e5);
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(15, 12, 8,0.08), 0 2px 8px rgba(15, 12, 8,0.04);
+  width: 100%;
+  max-width: 400px;
+  overflow: hidden;
+  text-align: left;
+}
+.ui-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.ui-dialog-title {
+  font-family: var(--font-display, 'Cormorant Garamond', serif);
+  font-size: 1.375rem;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--color-ink, #1a1a1a);
+  margin: 0;
+}
+.ui-dialog-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  color: var(--color-ash, #888);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.ui-dialog-close:hover {
+  color: var(--color-ink, #1a1a1a);
+  background: var(--color-cream, #f5f0eb);
+}
+.ui-dialog-body {
+  padding: 12px 24px 4px;
+}
+.ui-dialog-body p {
+  font-size: 0.9375rem;
+  color: var(--color-ash, #888);
+  line-height: 1.5;
+  margin: 0;
+}
+.ui-dialog-footer {
+  display: flex;
+  gap: 8px;
+  padding: 20px 24px;
+  justify-content: flex-end;
+}
+.ui-dialog-btn--danger {
+  --btn-bg: oklch(55% 0.2 25);
+}
+.ui-dialog-btn--danger:hover::before {
+  background: oklch(50% 0.22 25) !important;
+}
+
+/* ─── Upload Dialog ─── */
+.upload-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: oklch(18% 0.015 40 / 0.32);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  animation: uploadDialogFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes uploadDialogFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.upload-dialog {
+  position: relative;
+  background: var(--color-paper, #fff);
+  border-radius: 18px;
+  box-shadow: 0 32px 64px -24px rgba(20, 14, 10, 0.22), 0 2px 8px rgba(20, 14, 10, 0.04);
+  width: 100%;
+  max-width: 520px;
+  padding: 44px 44px 40px;
+  animation: uploadDialogSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes uploadDialogSlideUp {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.upload-dialog-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  background: none;
+  border: none;
+  color: var(--color-ash, #999);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.upload-dialog-close:hover {
+  color: var(--color-ink, #1a1a1a);
+  background: var(--color-cream, #f5f0eb);
+}
+.upload-dialog-close:focus-visible {
+  outline: 2px solid var(--color-accent, #1B365D);
+  outline-offset: 2px;
+}
+
+.upload-dialog-title {
+  font-family: var(--font-display, 'Cormorant Garamond', serif);
+  font-size: 1.875rem;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--color-ink, #1a1a1a);
+  margin: 0 0 2px;
+  line-height: 1.15;
+  text-align: left;
+}
+.upload-dialog-subtitle {
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.8125rem;
+  color: var(--color-ash, #999);
+  margin: 0 0 36px;
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+
+.upload-dialog-dropzone {
+  display: block;
+  width: 100%;
+  border: 1.5px dashed var(--color-mist, #e0dcd7);
+  border-radius: 14px;
+  padding: 52px 24px;
+  margin-bottom: 28px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  background: transparent;
+  outline: none;
+}
+.upload-dialog-dropzone:focus-visible {
+  border-color: var(--color-accent, #1B365D);
+  box-shadow: 0 0 0 3px oklch(60% 0.25 350 / 0.14);
+}
+.upload-dialog-dropzone:hover {
+  border-color: var(--color-accent, #1B365D);
+  background: oklch(98.5% 0.008 350);
+}
+.upload-dialog-dropzone.is-dragover {
+  border-color: var(--color-accent, #1B365D);
+  background: oklch(97% 0.014 350);
+  transform: scale(1.006);
+}
+.upload-dialog-dropzone:active {
+  background: oklch(96.5% 0.016 350);
+}
+
+.upload-dialog-dropzone-icon {
+  display: flex;
+  justify-content: center;
+  color: var(--color-ash, #999);
+  margin-bottom: 12px;
+  transition: color 0.2s;
+}
+.upload-dialog-dropzone:hover .upload-dialog-dropzone-icon,
+.upload-dialog-dropzone.is-dragover .upload-dialog-dropzone-icon {
+  color: var(--color-accent, #1B365D);
+}
+
+.upload-dialog-dropzone-text {
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 1.125rem;
+  color: var(--color-ink, #1a1a1a);
+  margin: 0 0 4px;
+  font-weight: 500;
+}
+.upload-dialog-dropzone-hint {
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.8125rem;
+  color: var(--color-ash, #999);
+  margin: 0;
+}
+/* Upload dialog — cloud storage sources */
+.upload-dialog-cloud-sources {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.upload-dialog-cloud-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border: 1px solid var(--color-mist, #e0dcd7);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-ink, #1a1a1a);
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.upload-dialog-cloud-btn:hover {
+  border-color: var(--color-accent, #1B365D);
+  background: oklch(98.5% 0.008 350);
+}
+.upload-dialog-cloud-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.upload-dialog-cloud-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.upload-dialog-cloud-spinner {
+  flex-shrink: 0;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Upload dialog — paste a link section */
+.upload-dialog-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 16px;
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--color-ash, #999);
+}
+.upload-dialog-divider span {
+  flex-shrink: 0;
+}
+.upload-dialog-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-mist, #e0dcd7);
+}
+.upload-dialog-link-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.upload-dialog-link-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--color-mist, #e0dcd7);
+  border-radius: 100px;
+  background: var(--color-paper, #fff);
+  color: var(--color-ink, #1a1a1a);
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.upload-dialog-link-input::placeholder {
+  color: var(--color-ash, #999);
+}
+.upload-dialog-link-input:focus {
+  border-color: var(--color-accent, #1B365D);
+  box-shadow: 0 0 0 3px oklch(60% 0.25 350 / 0.12);
+}
+.upload-dialog-link-btn {
+  padding: 10px 18px;
+  border: 1px solid var(--color-mist, #e0dcd7);
+  border-radius: 100px;
+  background: transparent;
+  color: var(--color-ink, #1a1a1a);
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.upload-dialog-link-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.upload-dialog-link-btn:not(:disabled):hover {
+  border-color: var(--color-accent, #1B365D);
+  color: var(--color-accent, #1B365D);
+}
+.upload-dialog-link-error {
+  margin: 10px 0 0;
+  color: oklch(55% 0.2 25);
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.8125rem;
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-dialog-overlay,
+  .upload-dialog {
+    animation: none;
+  }
+  .upload-dialog-dropzone,
+  .upload-dialog-dropzone.is-dragover {
+    transition: border-color 0.15s, background 0.15s;
+    transform: none;
+  }
+}
+
+/* ─── Bench Link editor ─── */
+.bench-link-editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+/* Centered content area below the toolbar — embeds and preview cards both
+ * live here. Split from `.bench-link-editor` so the outer editor can host
+ * the shared `.bench-editor-toolbar` at its top edge without breaking the
+ * previous center-alignment of the card / embed. */
+.bench-link-editor-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: auto;
+}
+.bench-link-embed {
+  width: 100%;
+  max-width: 960px;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(15, 12, 8,0.12), 0 2px 8px rgba(15, 12, 8,0.06);
+  background: #000;
+}
+.bench-link-embed iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+.bench-link-card {
+  max-width: 520px;
+  padding: 40px;
+  background: var(--color-paper, #fff);
+  border: 1px solid var(--color-mist, #e0dcd7);
+  border-radius: 18px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(15, 12, 8,0.06);
+}
+.bench-link-card-title {
+  color: var(--color-ash, #999);
+  margin-bottom: 16px;
+}
+.bench-link-card-title svg {
+  width: 32px;
+  height: 32px;
+}
+.bench-link-card-name {
+  font-family: var(--font-display, 'Cormorant Garamond', serif);
+  font-size: 1.5rem;
+  font-style: italic;
+  color: var(--color-ink, #1a1a1a);
+  margin: 0 0 8px;
+  line-height: 1.3;
+  word-break: break-word;
+}
+.bench-link-card-url {
+  display: block;
+  font-family: var(--font-mono, 'Space Grotesk', monospace);
+  font-size: 0.8125rem;
+  color: var(--color-ash, #999);
+  text-decoration: none;
+  word-break: break-all;
+  margin-bottom: 24px;
+}
+.bench-link-card-url:hover {
+  color: var(--color-accent, #1B365D);
+  text-decoration: underline;
+}
+.bench-link-card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 1px solid var(--color-accent, #1B365D);
+  border-radius: 100px;
+  background: var(--color-accent, #1B365D);
+  color: #fff;
+  font-family: var(--font-body, 'Instrument Sans', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+.bench-link-card-btn:hover {
+  opacity: 0.9;
+}
+

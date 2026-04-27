@@ -1,0 +1,3329 @@
+/* ============================================================
+   Workspace V2 — two-pane shell (chat + bench).
+   Scoped under .wsv2 so nothing here leaks into the current app.
+   ============================================================ */
+
+.wsv2,
+.wsv2-home {
+  /* kami Paper — warm parchment canvas, no cool blue-grays, single
+     ink-blue accent. The three bg tokens stack as lightest-to-deepest
+     parchment so the bench reads as "paper on a desk": bench-bg is
+     the sheet, body-bg is the canvas, chat-bg is the muted tray. */
+  --wsv2-body-bg: #f5f4ed;                       /* kami parchment */
+  --wsv2-chat-bg: #efece1;                       /* deeper parchment for chat pane */
+  --wsv2-bench-bg: #faf8f1;                      /* brightest paper for bench */
+  --wsv2-hairline: rgba(15, 12, 8, 0.08);
+  --wsv2-hairline-strong: rgba(15, 12, 8, 0.14);
+  --wsv2-ink: rgba(15, 12, 8, 0.92);
+  --wsv2-ink-2: rgba(15, 12, 8, 0.64);
+  --wsv2-ink-3: rgba(15, 12, 8, 0.5);
+  --wsv2-peach: rgb(253, 244, 238);              /* warm tint (retained) */
+  --wsv2-cool: rgb(243, 243, 236);               /* warm neutral — name is legacy */
+  --wsv2-avatar-bg: rgb(227, 218, 204);
+  /* Selection — ink-blue tint derived from --color-accent. Warm rose
+     is gone; kami rules allow only one chromatic hue, and ink blue
+     is it. */
+  --wsv2-select-bg: rgba(27, 54, 93, 0.10);
+  --wsv2-select-bg-strong: rgba(27, 54, 93, 0.16);
+  --wsv2-accent: #1B365D;                        /* kami ink blue */
+  --wsv2-accent-soft: rgba(27, 54, 93, 0.14);
+  --wsv2-paper: #faf8f1;
+  --wsv2-chat-w: 280px;
+
+  color: var(--wsv2-ink);
+  font: 400 13px/1.45 var(--font-body);
+  font-feature-settings: "ss01", "cv11";
+}
+
+.wsv2 {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  background: var(--wsv2-body-bg);
+  overflow: hidden;
+}
+
+/* ===== Chat panel (left) ========================================== */
+
+.wsv2-chat {
+  width: var(--wsv2-chat-w);
+  flex: 0 0 var(--wsv2-chat-w);
+  background: var(--wsv2-chat-bg);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  border-right: 1px solid rgb(204, 204, 204);
+}
+
+.wsv2-chat-resizer {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
+  background: transparent;
+  transition: background-color 120ms ease;
+}
+
+.wsv2-chat-resizer:hover,
+.wsv2-chat-resizer.is-dragging {
+  background: var(--color-accent);
+}
+
+/* While the chat/bench divider is being dragged, neutralize pointer
+ * events on the bench so an iframe inside it (HTML slide preview, pptx
+ * viewer, etc.) can't swallow the mouseup and strand the drag. Also
+ * forces the col-resize cursor and suppresses text selection globally
+ * for the duration of the drag. */
+body.wsv2-resizing-chat {
+  cursor: col-resize;
+  user-select: none;
+}
+body.wsv2-resizing-chat .wsv2-bench { pointer-events: none; }
+body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
+
+/* --- Chat tab strip --- */
+
+/* Chat header: project title row (logo card + name) above the tabs.
+ * The two rows mirror bench-tabs + bench-subbar heights (40 + 39) so the
+ * two panes' headers line up exactly across the vertical split. */
+.wsv2-chat-header {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+}
+.wsv2-chat-title-row {
+  /* Match bench-tabs row (40px) so the left and right panes' headers
+   * line up across the vertical split. The row below (.wsv2-chat-tabs
+   * at 39px) matches bench-subbar. */
+  height: 40px;
+  flex: 0 0 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--wsv2-hairline);
+}
+.wsv2-chat-project-name {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--wsv2-ink);
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.wsv2-chat-project-name:hover { color: var(--color-accent); }
+.wsv2-chat-project-name.is-editing {
+  /* Inline-rename input: outline + soft fill, matches the reference
+   * wireframe's "click to rename" affordance. */
+  outline: 1.5px solid var(--color-accent);
+  outline-offset: 2px;
+  background: color-mix(in oklch, var(--color-accent) 18%, transparent);
+  border-radius: 3px;
+  padding: 1px 4px;
+  margin: -1px -4px;
+}
+.wsv2-chat-project-name.is-editing:focus { outline-color: var(--color-accent); }
+
+.wsv2-chat-tabs {
+  /* Matches .wsv2-bench-subbar (39px) so the two panes' second rows
+   * align across the split. */
+  height: 39px;
+  flex: 0 0 39px;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--wsv2-hairline);
+}
+
+.wsv2-home-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--wsv2-hairline);
+  background: var(--wsv2-card, rgb(250, 249, 245));
+  color: var(--wsv2-ink-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 3px;
+  flex: 0 0 auto;
+}
+.wsv2-home-icon:hover { border-color: var(--wsv2-ink-3); }
+.wsv2-home-icon-mark { display: inline-flex; width: 26px; height: 26px; }
+.wsv2-home-icon-mark svg,
+.wsv2-home-icon-mark img { width: 100%; height: 100%; display: block; object-fit: contain; }
+
+.wsv2-tab-pill {
+  height: 30px;
+  padding: 0 10px 5px;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  font-family: inherit;
+  font-weight: 550;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: flex-end;
+  position: relative;
+  transition: color 140ms ease;
+}
+.wsv2-tab-pill.is-active { color: var(--wsv2-ink); }
+.wsv2-tab-pill.is-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--wsv2-bench-bg);
+}
+.wsv2-tab-pill:hover { color: var(--wsv2-ink); }
+
+.wsv2-chat-new {
+  margin-left: auto;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  margin-bottom: 7px;
+  font-size: 16px;
+  line-height: 1;
+}
+.wsv2-chat-new:hover { background: var(--wsv2-hairline); color: var(--wsv2-ink); }
+
+/* --- Message thread ---
+ *
+ * Editorial transcript: each turn breathes. `.wsv2-thread`'s `gap`
+ * sets turn-to-turn rhythm (clamp'd so it grows on wider columns);
+ * `.wsv2-msg + .wsv2-msg` owns the tighter within-turn gap between
+ * user and assistant. Speaker labels are small-caps micro-labels in
+ * Space Grotesk so the name recedes and the body reads like a
+ * column in a magazine. Assistant replies carry a soft rose left-
+ * rule — the only differentiation between voices, no chat bubbles. */
+
+.wsv2-thread {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 22px 18px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.5rem, 2.4vw, 2.25rem);
+}
+
+/* Floating pill positioned absolutely inside `.wsv2-chat` (which is
+ * position: relative). Sits just above the composer so it doesn't collide
+ * with the executor picker row. Position is the same regardless of how
+ * far the thread has scrolled — appearance is controlled by the React
+ * `atBottom` flag in ChatPanel. */
+.wsv2-scroll-to-bottom {
+  position: absolute;
+  bottom: 130px; /* above the composer card + executor picker */
+  right: 18px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(15, 12, 8, 0.12);
+  background: rgb(250, 249, 245);
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 10%);
+  z-index: 15;
+}
+.wsv2-scroll-to-bottom:hover { color: var(--wsv2-ink); background: rgba(15, 12, 8, 0.06); }
+
+/* Share menu dropdown — sits under the Share button in the bench header.
+ * Opaque paper fill so bench content behind it doesn't bleed through. */
+.wsv2-share-menu-wrap { position: relative; }
+.wsv2-share-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  min-width: 240px;
+  padding: 6px;
+  background: rgb(250, 249, 245);
+  border: 1px solid rgba(15, 12, 8, 0.12);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 14%);
+  z-index: 30;
+}
+.wsv2-share-menu-section { display: flex; flex-direction: column; gap: 2px; }
+.wsv2-share-menu-divider {
+  height: 1px;
+  background: rgba(15, 12, 8, 0.08);
+  margin: 6px 0;
+}
+.wsv2-share-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: var(--wsv2-ink);
+  font: 500 13px/1 inherit;
+  text-align: left;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wsv2-share-menu-item:hover:not(:disabled) { background: rgba(15, 12, 8, 0.06); }
+.wsv2-share-menu-item:disabled { opacity: 0.5; cursor: not-allowed; }
+.wsv2-share-menu-item svg { flex-shrink: 0; color: var(--wsv2-ink-2); }
+
+.wsv2-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* Within one turn (user → assistant sharing a wrapper), keep it tight
+ * so the pair reads as a single exchange. */
+.wsv2-msg + .wsv2-msg {
+  margin-top: 0.75rem;
+}
+/* Assistant voice: subtle left-rule in the desaturated rose, no
+ * bubble or background — editorial, not chat. */
+.wsv2-msg.is-claude {
+  padding-left: 14px;
+  border-left: 1px solid var(--color-accent-dim);
+}
+
+.wsv2-msg-author {
+  font-family: var(--font-mono, 'Space Grotesk', ui-sans-serif, system-ui, sans-serif);
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--wsv2-ink-3);
+  margin-bottom: 0;
+}
+.wsv2-msg-body {
+  font-family: inherit;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-msg-muted { color: var(--wsv2-ink-3); font-style: italic; }
+.wsv2-msg-tool {
+  font: 400 12px/1.45 "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color: var(--wsv2-ink-3);
+  background: rgba(27, 54, 93, 0.04);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin: 4px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.wsv2-msg-tool-name { color: var(--wsv2-ink); font-weight: 500; }
+.wsv2-msg-tool-arg { color: var(--wsv2-ink-3); }
+
+.wsv2-card {
+  border-radius: 8px;
+  padding: 12px 14px;
+  font: 400 13px/1.5 inherit;
+}
+.wsv2-card-peach { background: var(--wsv2-peach); }
+.wsv2-card-cool { background: var(--wsv2-cool); }
+.wsv2-card-title {
+  font: 600 12px/1.2 inherit;
+  margin-bottom: 6px;
+  color: var(--wsv2-ink);
+}
+.wsv2-card-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.wsv2-card-list li { display: flex; gap: 8px; align-items: center; color: var(--wsv2-ink-2); }
+.wsv2-card-list li::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  flex: 0 0 12px;
+}
+.wsv2-card-list li.is-done { color: var(--wsv2-ink); }
+.wsv2-card-list li.is-done::before { background: var(--wsv2-ink); border-color: var(--wsv2-ink); }
+
+.wsv2-status {
+  font: italic 400 12px/1 inherit;
+  color: var(--wsv2-ink-2);
+  /* Negative top margin cancels most of `.wsv2-thread`'s turn-to-turn
+   * gap so "Working…" sits close to the prompt it belongs to rather
+   * than reading as its own turn. `.wsv2-thread`'s gap is
+   * clamp(1.5rem, 2.4vw, 2.25rem); pulling back ~1.25rem leaves a
+   * breath but keeps the pair visually grouped. */
+  margin-top: -1.25rem;
+  color: var(--wsv2-ink-3);
+}
+
+.wsv2-chat-empty {
+  color: var(--wsv2-ink-3);
+  font: italic 400 13px/1.5 inherit;
+  padding: 10px 0;
+}
+
+/* --- Task header (shown above the thread in the Chat tab) --- */
+
+.wsv2-task-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--wsv2-hairline);
+  margin-bottom: 4px;
+}
+.wsv2-task-title {
+  font: 600 13px/1.3 inherit;
+  color: var(--wsv2-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.wsv2-task-meta {
+  font: 400 11px/1.2 inherit;
+  color: var(--wsv2-ink-3);
+}
+
+/* --- History list --- */
+
+.wsv2-history {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 6px 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wsv2-history-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--wsv2-ink);
+  transition: background 120ms ease;
+}
+.wsv2-history-row:hover { background: var(--wsv2-hairline); }
+.wsv2-history-row.is-active { background: var(--wsv2-select-bg); }
+.wsv2-history-status {
+  flex: 0 0 auto;
+  width: 14px;
+  text-align: center;
+  font: 400 12px/1.3 inherit;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-history-status--running { color: var(--color-accent); }
+.wsv2-history-status--completed { color: var(--wsv2-ink-2); }
+.wsv2-history-status--failed { color: #7a3a32; }
+.wsv2-history-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.wsv2-history-title {
+  font: 500 12px/1.35 inherit;
+  color: var(--wsv2-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.wsv2-history-meta {
+  font: 400 11px/1.2 inherit;
+  color: var(--wsv2-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Composer --- */
+
+.wsv2-composer {
+  padding: 0 12px 12px;
+  flex: 0 0 auto;
+}
+.wsv2-composer-card {
+  background: var(--wsv2-bench-bg);
+  border-radius: 12px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  box-shadow: rgba(20, 20, 19, 0.06) 0 1px 3px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wsv2-composer-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.wsv2-composer-chips::-webkit-scrollbar { display: none; }
+.wsv2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 6px;
+  border-radius: 6px;
+  background: var(--wsv2-body-bg);
+  font: 500 11px/1 inherit;
+  color: var(--wsv2-ink);
+  white-space: nowrap;
+  border: 1px solid var(--wsv2-hairline);
+}
+.wsv2-chip-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: var(--wsv2-cool);
+  border: 1px solid var(--wsv2-hairline);
+  flex: 0 0 10px;
+}
+.wsv2-composer-input {
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font: 400 13px/1.5 inherit;
+  color: var(--wsv2-ink);
+  min-height: 46px;
+  max-height: 140px;
+}
+.wsv2-composer-input::placeholder { color: var(--wsv2-ink-3); }
+
+/* Lexical editor — same visual box as the plain textarea above. */
+.wsv2-composer-editor {
+  position: relative;
+  min-height: 46px;
+  max-height: 140px;
+  overflow-y: auto;
+}
+.wsv2-composer-editable {
+  outline: none;
+  font: 400 13px/1.5 inherit;
+  color: var(--wsv2-ink);
+  min-height: 46px;
+  caret-color: var(--wsv2-ink);
+}
+.wsv2-composer-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--wsv2-ink-3);
+  font: 400 13px/1.5 inherit;
+  pointer-events: none;
+  user-select: none;
+}
+.wsv2-composer-paragraph { margin: 0; }
+
+/* Executor picker: compact dropdown above the composer showing which agent
+ * CLI / upstream will run this turn. See src/app/workspace-v2/ExecutorPicker.tsx. */
+.wsv2-composer-executor-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px 6px;
+}
+.wsv2-composer-skills-btn {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font: 500 13px/1 inherit;
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.wsv2-composer-skills-btn:hover { background: rgba(15, 12, 8, 0.06); color: var(--wsv2-ink); }
+.wsv2-composer-skills-btn .wsv2-composer-skills-btn-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-composer-skills-btn[data-active='true'] {
+  color: var(--wsv2-ink);
+  background: rgba(15, 12, 8, 0.06);
+}
+
+/* ── Attached skill chips inside the composer card ── */
+.wsv2-composer-skill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px 4px;
+}
+.wsv2-composer-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  border: 1px solid rgba(15, 12, 8, 0.12);
+  border-radius: 999px;
+  background: transparent;
+  font: 500 13px/1 inherit;
+  color: var(--wsv2-ink);
+}
+.wsv2-composer-skill-chip svg { color: var(--wsv2-ink-2); flex-shrink: 0; }
+.wsv2-composer-skill-chip-remove {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 2px;
+  margin-left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+}
+.wsv2-composer-skill-chip-remove:hover { background: rgba(15, 12, 8, 0.08); color: var(--wsv2-ink); }
+.wsv2-executor-picker { position: relative; }
+.wsv2-executor-picker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(15, 12, 8, 0.12);
+  background: var(--wsv2-body-bg);
+  color: var(--wsv2-ink-2);
+  font: 500 11px/1 inherit;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+.wsv2-executor-picker-btn:hover:not(:disabled) { color: var(--wsv2-ink); border-color: var(--wsv2-ink-3); }
+.wsv2-executor-picker-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.wsv2-executor-picker-label { font-weight: 500; }
+.wsv2-executor-picker-menu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin: 0 0 6px;
+  padding: 4px;
+  list-style: none;
+  min-width: 160px;
+  /* Opaque paper fill so messages behind the composer don't bleed through. */
+  background: rgb(250, 249, 245);
+  border: 1px solid rgba(15, 12, 8, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 12%);
+  z-index: 20;
+}
+.wsv2-executor-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  color: var(--wsv2-ink);
+  font: 500 12px/1 inherit;
+  text-align: left;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wsv2-executor-picker-item:hover:not(:disabled) { background: rgba(15, 12, 8, 0.06); }
+.wsv2-executor-picker-item:disabled { opacity: 0.4; cursor: not-allowed; }
+.wsv2-executor-picker-check { margin-left: auto; color: var(--color-accent); }
+
+.wsv2-composer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.wsv2-icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wsv2-icon-btn:hover { background: var(--wsv2-body-bg); color: var(--wsv2-ink); }
+.wsv2-send {
+  margin-left: auto;
+  background: var(--color-accent);
+  color: oklch(99% 0.008 90);
+  border: none;
+  border-radius: 999px;
+  padding: 0 14px;
+  height: 28px;
+  font: 500 12px/1 inherit;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.wsv2-send:hover { background: var(--color-accent-hover); }
+.wsv2-send:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ===== Bench (right) ============================================== */
+
+.wsv2-bench {
+  flex: 1 1 auto;
+  background: var(--wsv2-bench-bg);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+}
+
+/* --- Tab bar --- */
+
+.wsv2-bench-tabs {
+  height: 40px;
+  flex: 0 0 40px;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 10px 0 4px;
+  border-bottom: 1px solid var(--wsv2-hairline);
+  gap: 4px;
+}
+.wsv2-bench-tabs-scroll {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  flex: 1 1 auto;
+  min-width: 0;
+  mask-image: linear-gradient(to right, black 0, black calc(100% - 24px), transparent 100%);
+}
+.wsv2-bench-tabs-scroll::-webkit-scrollbar { display: none; }
+
+.wsv2-bench-tab {
+  height: 30px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  font: 500 11px/1 inherit;
+  letter-spacing: 0.01em;
+  color: var(--wsv2-ink-3);
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  transition: color 140ms ease;
+}
+.wsv2-bench-tab.is-active { color: var(--wsv2-ink); }
+.wsv2-bench-tab.is-active::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -1px;
+  height: 1px;
+  background: var(--color-accent);
+}
+.wsv2-bench-tab:hover { color: var(--wsv2-ink); }
+.wsv2-bench-tab-close {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: none;
+  background: transparent;
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  opacity: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+}
+.wsv2-bench-tab:hover .wsv2-bench-tab-close,
+.wsv2-bench-tab.is-active .wsv2-bench-tab-close { opacity: 1; }
+.wsv2-bench-tab-close:hover { background: var(--wsv2-hairline); color: var(--wsv2-ink); }
+
+.wsv2-bench-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+  flex: 0 0 auto;
+}
+.wsv2-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--wsv2-avatar-bg);
+  color: rgb(120, 85, 45);
+  font: 600 10px/1 inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+.wsv2-btn-ghost {
+  background: transparent;
+  color: var(--wsv2-ink-2);
+  border: none;
+  border-radius: 6px;
+  height: 24px;
+  padding: 0 10px;
+  font: 500 11px/1 inherit;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+.wsv2-btn-ghost:hover { background: var(--wsv2-body-bg); color: var(--wsv2-ink); }
+.wsv2-btn-ghost:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: transparent;
+  color: var(--wsv2-ink-3);
+}
+.wsv2-btn-ghost.is-active {
+  color: var(--color-accent);
+  background: var(--wsv2-select-bg);
+}
+.wsv2-btn-solid {
+  background: var(--color-accent);
+  color: oklch(99% 0.008 90);
+  border: none;
+  border-radius: 999px;
+  height: 24px;
+  padding: 0 12px;
+  font: 500 11px/1 inherit;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.wsv2-btn-solid:hover { background: var(--color-accent-hover); }
+.wsv2-btn-solid:disabled {
+  background: var(--wsv2-cool);
+  color: var(--wsv2-ink-3);
+  cursor: not-allowed;
+}
+
+/* --- Sub-toolbar --- */
+
+.wsv2-bench-subbar {
+  height: 39px;
+  flex: 0 0 39px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--wsv2-hairline);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--wsv2-bench-bg);
+}
+.wsv2-page-toolbar {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.wsv2-subbar-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.wsv2-subbar-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Napkin editor — Canvas 2D surface + floating pill toolbar. */
+.wsv2-napkin {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #faf7f1;
+  cursor: crosshair;
+}
+.wsv2-napkin-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.wsv2-napkin-toolbar {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: var(--wsv2-bench-bg);
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 999px;
+  box-shadow: rgba(20, 20, 19, 0.08) 0 2px 8px;
+  z-index: 2;
+}
+.wsv2-napkin-tool {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #6A6560;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wsv2-napkin-tool:hover { color: #2A2622; background: #EEEAE2; }
+.wsv2-napkin-tool.is-active {
+  background: var(--wsv2-accent-soft);
+  color: var(--color-accent);
+}
+.wsv2-napkin-toolsep {
+  width: 1px;
+  height: 20px;
+  background: #D8D3CA;
+  margin: 0 6px;
+}
+.wsv2-napkin-save {
+  padding: 0 16px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: #4A4A4A;
+  color: #fff;
+  font: 500 13px/1 inherit;
+  cursor: pointer;
+}
+.wsv2-napkin-save:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* sub-toolbar — appears below the main pill for tools with options */
+.wsv2-napkin-subtoolbar {
+  position: absolute;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--wsv2-bench-bg);
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 999px;
+  box-shadow: rgba(20, 20, 19, 0.08) 0 2px 8px;
+  z-index: 2;
+}
+.wsv2-napkin-weight {
+  width: 30px;
+  height: 26px;
+  border: none;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--wsv2-ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wsv2-napkin-weight:hover { background: var(--wsv2-body-bg); }
+.wsv2-napkin-weight.is-active {
+  background: var(--wsv2-accent-soft, #f7d5e4);
+}
+.wsv2-napkin-swatch {
+  width: 18px;
+  height: 18px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  padding: 0;
+  cursor: pointer;
+}
+.wsv2-napkin-swatch.is-active {
+  border-color: #fff;
+  box-shadow: 0 0 0 1.5px var(--wsv2-ink);
+}
+.wsv2-napkin-sticky-swatch {
+  width: 22px;
+  height: 22px;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+}
+.wsv2-napkin-sticky-swatch.is-active {
+  border-color: #fff;
+  box-shadow: 0 0 0 1.5px var(--wsv2-ink);
+}
+
+/* inline edit overlay — text input + sticky contentEditable area */
+.wsv2-napkin-editoverlay {
+  z-index: 3;
+  outline: none;
+  white-space: pre;
+}
+.wsv2-napkin-editoverlay--text {
+  padding: 2px 4px;
+  border: 1px solid rgba(15, 12, 8, 0.35);
+  background: var(--wsv2-bench-bg);
+  min-width: 4px;
+  line-height: 1.2;
+  white-space: pre;
+}
+.wsv2-napkin-editoverlay--sticky {
+  padding: 12px;
+  font: 14px/1.3 sans-serif;
+  color: #111;
+  white-space: pre-wrap;
+  overflow: hidden;
+  cursor: text;
+}
+.wsv2-page-toolbar .wsv2-toolbar-sep {
+  width: 1px;
+  height: 14px;
+  background: var(--wsv2-hairline-strong);
+  margin: 0 8px;
+  flex: 0 0 1px;
+}
+.wsv2-nav-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  background: var(--wsv2-bench-bg);
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wsv2-nav-btn:hover { color: var(--wsv2-ink); background: var(--wsv2-body-bg); }
+.wsv2-nav-btn:disabled { cursor: default; opacity: 0.6; }
+.wsv2-nav-btn:disabled:hover { color: var(--wsv2-ink-2); background: var(--wsv2-bench-bg); }
+.wsv2-nav-btn.is-spinning svg { animation: bench-spin 0.8s linear infinite; transform-origin: 50% 50%; }
+.wsv2-breadcrumb {
+  font: 500 11px/1 inherit;
+  letter-spacing: 0.01em;
+  color: var(--wsv2-ink-2);
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 140ms ease, background 140ms ease;
+}
+.wsv2-breadcrumb:hover { color: var(--wsv2-ink); background: var(--wsv2-body-bg); }
+.wsv2-breadcrumb-sep {
+  color: var(--wsv2-ink-3);
+  font-style: italic;
+  margin: 0 4px;
+  font-family: var(--font-display);
+}
+
+/* --- Tab body + drop zone --- */
+
+.wsv2-bench-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+}
+
+/* Page-tab body: iframe on the left, Properties panel on the right
+ * when Edit mode is active. Panel is 240px fixed; iframe flexes to
+ * fill the rest. */
+.wsv2-page-body {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  /* Lets the comment-placement banner anchor without consuming flex
+   * space — iframe width stays stable across placement → pinned, so
+   * the popover anchor captured at click time doesn't drift. */
+  position: relative;
+}
+.wsv2-props {
+  flex: 0 0 280px;
+  border-left: 1px solid var(--wsv2-hairline);
+  padding: 14px 14px;
+  background: var(--wsv2-body-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+.wsv2-props-title {
+  font: 600 13px/1.2 ui-monospace, monospace;
+  color: var(--wsv2-ink);
+  padding-bottom: 4px;
+}
+.wsv2-props-group {
+  font: 500 12px/1 inherit;
+  letter-spacing: 0.04em;
+  color: var(--wsv2-ink-2);
+  font-variant: all-small-caps;
+  margin-top: 10px;
+  margin-bottom: 2px;
+}
+.wsv2-props-note {
+  font: 400 12px/1.4 inherit;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-props-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wsv2-props-field-inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.wsv2-props-field-inline .wsv2-props-label {
+  flex: 0 0 56px;
+}
+.wsv2-props-field-inline > input[type="text"],
+.wsv2-props-field-inline > input[type="number"],
+.wsv2-props-field-inline > select {
+  flex: 1;
+  min-width: 0;
+}
+.wsv2-props-label {
+  font: 500 11px/1 inherit;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-props input[type="text"],
+.wsv2-props input[type="number"],
+.wsv2-props select {
+  font: 500 11px/1 ui-monospace, monospace;
+  padding: 5px 7px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 6px;
+  background: var(--wsv2-bench-bg);
+  color: var(--wsv2-ink);
+  min-width: 0;
+}
+.wsv2-props input[type="text"]:focus,
+.wsv2-props input[type="number"]:focus,
+.wsv2-props select:focus {
+  outline: none;
+  border-color: #1B365D;
+}
+.wsv2-props-unit {
+  font: 400 10px/1 ui-monospace, monospace;
+  color: var(--wsv2-ink-2);
+  flex: 0 0 auto;
+}
+.wsv2-props-hex {
+  font: 400 11px/1 ui-monospace, monospace;
+  color: var(--wsv2-ink-2);
+  flex: 1;
+}
+.wsv2-props-hint {
+  font: 400 10px/1.2 inherit;
+  color: var(--wsv2-ink-2);
+  font-style: italic;
+  flex: 1;
+}
+.wsv2-props input[type="color"] {
+  width: 28px;
+  height: 22px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 4px;
+  padding: 0;
+  background: var(--wsv2-bench-bg);
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.wsv2-props input[type="color"]:disabled { cursor: not-allowed; opacity: 0.5; }
+
+.wsv2-dropzone {
+  min-height: 96px;
+  flex: 0 0 auto;
+  padding: 16px 20px 18px;
+  background: rgba(250, 249, 245, 0.7);
+  border-top: 1px solid rgba(15, 12, 8, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--wsv2-ink-3);
+  transition: background 140ms ease, border-color 140ms ease;
+}
+.wsv2-dropzone.is-active {
+  background: var(--wsv2-select-bg);
+  border-top-color: var(--color-accent);
+  color: var(--wsv2-ink);
+}
+.wsv2-dropzone-icon {
+  color: var(--wsv2-ink-3);
+  margin-bottom: 2px;
+}
+.wsv2-dropzone.is-active .wsv2-dropzone-icon { color: var(--color-accent); }
+.wsv2-dropzone-title {
+  font: 500 13px/1 inherit;
+  font-variant: all-small-caps;
+  letter-spacing: 0.08em;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-dropzone-sub {
+  font-family: var(--font-display);
+  font: italic 400 13px/1.35 var(--font-display);
+  color: var(--wsv2-ink-3);
+  max-width: 420px;
+  text-align: center;
+}
+
+/* Confirm/cancel pill — centered at the bottom above the dropzone.
+   Appears while a drag is in flight; X aborts the drag, checkmark is
+   a visual affordance for the drop (the browser's native drop still
+   fires on release). */
+.wsv2-confirm-pill {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 5px;
+  background: #1f1d1a;
+  color: #fff;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(15, 12, 8, 0.25);
+  z-index: 5;
+  pointer-events: auto;
+}
+.wsv2-confirm-pill-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.wsv2-confirm-pill-btn:hover { background: rgba(255, 255, 255, 0.16); }
+.wsv2-confirm-pill-confirm { background: #1B365D; }
+.wsv2-confirm-pill-confirm:hover { background: #2a4a75; }
+.wsv2-confirm-pill-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0 6px;
+}
+.wsv2-confirm-pill-dots i {
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  animation: wsv2-pill-pulse 1.2s ease-in-out infinite;
+}
+.wsv2-confirm-pill-dots i:nth-child(2) { animation-delay: 0.12s; }
+.wsv2-confirm-pill-dots i:nth-child(3) { animation-delay: 0.24s; }
+.wsv2-confirm-pill-dots i:nth-child(4) { animation-delay: 0.36s; }
+.wsv2-confirm-pill-dots i:nth-child(5) { animation-delay: 0.48s; }
+@keyframes wsv2-pill-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
+}
+
+/* ===== Tab bodies ================================================== */
+
+/* --- File browser tab --- */
+
+.wsv2-filebrowser {
+  height: 100%;
+  display: flex;
+}
+.wsv2-filebrowser-list {
+  width: 340px;
+  flex: 0 0 340px;
+  border-right: 1px solid var(--wsv2-hairline);
+  overflow-y: auto;
+  padding: 4px 0 16px;
+}
+.wsv2-fb-section {
+  font: 500 12px/1 inherit;
+  font-variant: all-small-caps;
+  letter-spacing: 0.06em;
+  color: var(--wsv2-ink-3);
+  padding: 16px 16px 6px;
+}
+.wsv2-fb-row {
+  min-height: 44px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  color: var(--wsv2-ink);
+  transition: background 120ms ease, color 120ms ease;
+}
+.wsv2-fb-row:hover { background: var(--wsv2-body-bg); }
+.wsv2-fb-row.is-active {
+  background: #1B365D;
+  color: #fff;
+}
+.wsv2-fb-row.is-active .wsv2-fb-name,
+.wsv2-fb-row.is-active .wsv2-fb-meta,
+.wsv2-fb-row.is-active .wsv2-fb-date { color: #fff; }
+.wsv2-fb-row.is-active .wsv2-fb-icon { filter: brightness(0) invert(1); opacity: 0.96; }
+
+/* File-type icon — stroked body + tinted fill via section modifier.
+   Selection state drops tint via the is-active filter above. */
+.wsv2-fb-icon {
+  flex: 0 0 auto;
+  color: rgba(15, 12, 8, 0.35);
+}
+.wsv2-fb-icon path:first-child {
+  fill: var(--wsv2-cool);
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+.wsv2-fb-icon-fold {
+  fill: rgba(15, 12, 8, 0.08);
+  stroke: currentColor;
+  stroke-width: 1.2;
+  stroke-linejoin: round;
+}
+/* File-type icons — kami rule: no second chromatic hue. Each type
+   gets a distinct WARM-NEUTRAL tint (yellow-brown axis only) plus a
+   deeper fold shade. Distinguishable without introducing pink,
+   green, or orange. */
+.wsv2-fb-row--page .wsv2-fb-icon path:first-child { fill: #F1E9D7; }
+.wsv2-fb-row--page .wsv2-fb-icon-fold { fill: #D8C69A; }
+.wsv2-fb-row--script .wsv2-fb-icon path:first-child { fill: #ECE4CD; }
+.wsv2-fb-row--script .wsv2-fb-icon-fold { fill: #CEBE8C; }
+.wsv2-fb-row--sketch .wsv2-fb-icon path:first-child { fill: #E7DDC2; }
+.wsv2-fb-row--sketch .wsv2-fb-icon-fold { fill: #C7B180; }
+.wsv2-fb-row--folder .wsv2-fb-icon path:first-child { fill: #E4DAC2; stroke: rgba(15, 12, 8, 0.35); }
+
+.wsv2-fb-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.wsv2-fb-name {
+  font: 500 13px/1.25 inherit;
+  color: var(--wsv2-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wsv2-fb-meta {
+  font: 400 11px/1 inherit;
+  color: var(--wsv2-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.wsv2-fb-date {
+  font: 400 11px/1 inherit;
+  color: var(--wsv2-ink-3);
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.wsv2-fb-chevron,
+.wsv2-fb-trailing {
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--wsv2-ink-3);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 0;
+  flex: 0 0 auto;
+  transition: transform 140ms ease;
+}
+.wsv2-fb-chevron:hover,
+.wsv2-fb-trailing:hover { color: var(--wsv2-ink); background: rgba(15, 12, 8, 0.06); }
+.wsv2-fb-row--folder.is-expanded .wsv2-fb-chevron { transform: rotate(90deg); }
+.wsv2-fb-row.is-active .wsv2-fb-chevron,
+.wsv2-fb-row.is-active .wsv2-fb-trailing { color: rgba(255, 255, 255, 0.85); }
+
+/* Per-row overflow menu (⋯). Hidden by default; appears on hover, on focus,
+   or while its dropdown is open (so clicking the button doesn't make it
+   disappear when the row loses hover). */
+.wsv2-fb-menu-wrap { position: relative; flex: 0 0 auto; }
+.wsv2-fb-menu-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--wsv2-ink-3);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 120ms ease, background 120ms ease, color 120ms ease;
+}
+.wsv2-fb-row:hover .wsv2-fb-menu-btn,
+.wsv2-fb-row:focus-within .wsv2-fb-menu-btn,
+.wsv2-fb-row.is-menu-open .wsv2-fb-menu-btn { opacity: 1; }
+.wsv2-fb-menu-btn:hover { background: rgba(15, 12, 8, 0.08); color: var(--wsv2-ink); }
+.wsv2-fb-row.is-active .wsv2-fb-menu-btn { color: rgba(255, 255, 255, 0.85); }
+.wsv2-fb-row.is-active .wsv2-fb-menu-btn:hover { background: rgba(255, 255, 255, 0.16); color: #fff; }
+
+.wsv2-fb-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 180px;
+  background: var(--wsv2-paper, #fffdf7);
+  border: 1px solid rgba(15, 12, 8, 0.12);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(15, 12, 8, 0.12);
+  padding: 6px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wsv2-fb-menu-divider {
+  height: 1px;
+  background: rgba(15, 12, 8, 0.08);
+  margin: 4px 0;
+}
+.wsv2-fb-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  color: var(--wsv2-ink);
+  font: 500 13px/1.2 inherit;
+  text-align: left;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+.wsv2-fb-menu-item:hover:not(:disabled) { background: rgba(15, 12, 8, 0.06); }
+.wsv2-fb-menu-item:disabled { opacity: 0.5; cursor: not-allowed; }
+.wsv2-fb-menu-item svg { flex-shrink: 0; color: var(--wsv2-ink-2); }
+.wsv2-fb-menu-item--danger { color: #7a3a32; }
+.wsv2-fb-menu-item--danger svg { color: #7a3a32; }
+.wsv2-fb-menu-item--danger:hover:not(:disabled) { background: rgba(179, 38, 30, 0.08); }
+
+.wsv2-filebrowser-detail {
+  flex: 1 1 auto;
+  background: var(--wsv2-body-bg);
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+.wsv2-detail-preview {
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+  background: var(--wsv2-cool);
+  border: 1px solid var(--wsv2-hairline);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wsv2-detail-preview > * {
+  max-width: 100%;
+  max-height: 100%;
+}
+.wsv2-detail-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  background: var(--wsv2-bench-bg);
+  color: var(--wsv2-ink);
+  font: 500 12px/1 inherit;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(15, 12, 8, 0.04);
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+.wsv2-detail-open:hover:not(:disabled) {
+  background: var(--wsv2-body-bg);
+  border-color: rgba(15, 12, 8, 0.22);
+}
+.wsv2-detail-open:disabled { opacity: 0.45; cursor: not-allowed; }
+.wsv2-detail-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.wsv2-detail-name { font: 600 15px/1.25 inherit; color: var(--wsv2-ink); }
+.wsv2-detail-type { font: 400 12px/1 inherit; color: var(--wsv2-ink-2); }
+.wsv2-detail-meta {
+  font: 400 11px/1.3 inherit;
+  color: var(--wsv2-ink-3);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- File editor tab --- */
+
+.wsv2-editor-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wsv2-ink-3);
+  font: 400 13px/1.5 inherit;
+}
+
+/* --- Document / skill tab --- */
+
+.wsv2-doc {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 48px 48px 120px;
+  font: 400 15px/1.6 inherit;
+  color: var(--wsv2-ink);
+}
+.wsv2-doc-kicker {
+  font: 500 13px/1 inherit;
+  color: var(--wsv2-ink-2);
+  font-variant: all-small-caps;
+  letter-spacing: 0.04em;
+  margin-bottom: 14px;
+}
+.wsv2-doc-title {
+  font: 500 56px/1.1 var(--font-display);
+  color: var(--wsv2-ink);
+  margin: 0 0 12px;
+  letter-spacing: -0.015em;
+}
+.wsv2-doc-title em { font-style: italic; color: var(--wsv2-ink); }
+.wsv2-doc-sub {
+  font: 400 17px/1.5 inherit;
+  color: var(--wsv2-ink-2);
+  margin: 0 0 40px;
+}
+.wsv2-doc-section { margin-top: 40px; }
+.wsv2-doc-section-num {
+  font: 600 11px/1 inherit;
+  color: var(--wsv2-ink-2);
+  letter-spacing: 0.08em;
+}
+.wsv2-doc-section-h {
+  font: 500 28px/1.25 var(--font-display);
+  color: var(--wsv2-ink);
+  margin: 6px 0 12px;
+  letter-spacing: -0.005em;
+}
+.wsv2-doc p { margin: 0 0 14px; }
+
+/* --- Form tab --- */
+
+.wsv2-form {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 40px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  position: relative;
+}
+.wsv2-form-h {
+  font: 500 38px/1.15 var(--font-display);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+.wsv2-form-sub { color: var(--wsv2-ink-2); font: 400 14px/1.5 inherit; margin: 0 0 18px; }
+.wsv2-field-label { font: 600 14px/1.3 inherit; margin-bottom: 4px; }
+.wsv2-field-help { font: 400 13px/1.4 inherit; color: var(--wsv2-ink-2); margin-bottom: 10px; }
+.wsv2-field-textarea {
+  width: 100%;
+  min-height: 96px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--wsv2-bench-bg);
+  font: 400 13px/1.5 inherit;
+  color: var(--wsv2-ink);
+  resize: vertical;
+  outline: none;
+}
+.wsv2-field-textarea:focus { border-color: var(--wsv2-ink); }
+.wsv2-chiprow { display: flex; flex-wrap: wrap; gap: 8px; }
+.wsv2-field-chip {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  background: var(--wsv2-bench-bg);
+  color: var(--wsv2-ink);
+  font: 500 13px/1 inherit;
+  cursor: pointer;
+}
+.wsv2-field-chip.is-selected {
+  background: var(--wsv2-ink);
+  color: #fff;
+  border-color: var(--wsv2-ink);
+}
+.wsv2-field-chip:hover { background: var(--wsv2-body-bg); }
+.wsv2-field-chip.is-selected:hover { filter: brightness(1.1); background: var(--wsv2-ink); }
+.wsv2-slider-row { display: flex; align-items: center; gap: 14px; }
+.wsv2-slider-row input[type="range"] { flex: 1 1 auto; accent-color: var(--wsv2-ink); }
+.wsv2-slider-value { font: 600 16px/1 inherit; min-width: 32px; text-align: right; }
+
+.wsv2-form-continue {
+  position: sticky;
+  bottom: 20px;
+  align-self: flex-end;
+  background: var(--wsv2-cool);
+  color: var(--wsv2-ink);
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 8px;
+  padding: 0 18px;
+  height: 36px;
+  font: 500 13px/1 inherit;
+  cursor: pointer;
+}
+.wsv2-form-continue:hover { background: var(--wsv2-bench-bg); }
+.wsv2-form-continue:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ============================================================
+   Home page — project list (login landing page).
+   Scoped under .wsv2-home. Shares tokens with .wsv2.
+
+   Layout: two-column workspace — left is the creation form,
+   right is the project browser. Topbar with brand + docs link
+   spans both columns.
+   ============================================================ */
+
+.wsv2-home {
+  position: fixed;
+  inset: 0;
+  background: var(--wsv2-body-bg);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.wsv2-home-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--wsv2-hairline);
+  flex: 0 0 auto;
+}
+.wsv2-home-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wsv2-home-brand-mark {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+}
+.wsv2-home-brand-mark svg,
+.wsv2-home-brand-mark img { width: 100%; height: 100%; display: block; object-fit: contain; }
+.wsv2-home-brand-name {
+  font: 500 15px/1 inherit;
+  color: var(--wsv2-ink);
+  letter-spacing: -0.01em;
+}
+.wsv2-home-brand-badge {
+  font: 500 11px/1 inherit;
+  font-variant: all-small-caps;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: 100px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  color: var(--wsv2-ink-2);
+}
+.wsv2-home-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.wsv2-home-doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 500 13px/1 inherit;
+  color: var(--wsv2-ink-2);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: color 140ms ease, background 140ms ease;
+}
+.wsv2-home-doc-link:hover { color: var(--wsv2-ink); background: rgba(15, 12, 8, 0.04); }
+
+/* Language switcher — sits in topbars, mirrors doc-link weight/size. */
+.lang-switcher { display: inline-flex; align-items: center; }
+.lang-switcher-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'><path d='M1 1l4 4 4-4' stroke='%23574e3f' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/></svg>")
+    no-repeat right 8px center;
+  background-color: transparent;
+  border: 1px solid transparent;
+  font: 500 13px/1 inherit;
+  color: var(--wsv2-ink-2, var(--color-charcoal, #574e3f));
+  padding: 6px 22px 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+.lang-switcher-select:hover {
+  color: var(--wsv2-ink, var(--color-ink));
+  background-color: rgba(15, 12, 8, 0.04);
+}
+.lang-switcher-select:focus-visible {
+  outline: none;
+  border-color: var(--color-accent, #1B365D);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.wsv2-home-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 0;
+  overflow: hidden;
+}
+.wsv2-home-left,
+.wsv2-home-right {
+  padding: 40px 48px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 0;
+  overflow-y: auto;
+}
+.wsv2-home-left {
+  border-right: 1px solid var(--wsv2-hairline);
+  position: relative;
+}
+
+/* --- Creator form title + privacy note --- */
+.wsv2-home-form-title {
+  font: 500 36px/1.15 var(--font-display);
+  color: var(--wsv2-ink);
+  margin: 0 0 4px;
+  letter-spacing: -0.015em;
+}
+.wsv2-home-privacy {
+  font: 400 13px/1.5 var(--font-body);
+  color: var(--wsv2-ink-3);
+  margin: 0;
+}
+
+/* --- Create-project panel: tabs + inline form --- */
+.wsv2-home-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0;
+  margin-top: 4px;
+  max-width: 460px;
+  border-bottom: 1px solid var(--wsv2-hairline);
+  overflow-x: auto;
+}
+.wsv2-home-tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 8px 12px;
+  font: 500 12px/1.2 inherit;
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  margin-bottom: -1px;
+  transition: color 140ms ease, background 140ms ease, border-color 140ms ease;
+}
+.wsv2-home-tab:hover:not(:disabled) { color: var(--wsv2-ink); }
+.wsv2-home-tab:disabled { opacity: 0.5; cursor: not-allowed; }
+.wsv2-home-tab.is-active {
+  color: var(--wsv2-ink);
+  background: var(--wsv2-bench-bg);
+  border-color: var(--wsv2-hairline);
+}
+
+.wsv2-home-create {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 460px;
+  padding: 20px 20px 22px;
+  background: var(--wsv2-bench-bg);
+  border: 1px solid var(--wsv2-hairline);
+  border-top: 0;
+  border-radius: 0 10px 10px 10px;
+}
+.wsv2-home-create-title {
+  margin: 0;
+  font: 500 15px/1.2 inherit;
+  color: var(--wsv2-ink);
+}
+.wsv2-home-create-input {
+  appearance: none;
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--wsv2-paper);
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 8px;
+  font: 400 14px/1.3 inherit;
+  color: var(--wsv2-ink);
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.wsv2-home-create-input::placeholder { color: var(--wsv2-ink-3); }
+.wsv2-home-create-input:focus {
+  outline: none;
+  border-color: var(--wsv2-ink);
+  box-shadow: rgba(27, 54, 93, 0.12) 0 0 0 3px;
+}
+.wsv2-home-create-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.wsv2-home-create-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wsv2-home-create-label {
+  font: 400 12px/1.2 inherit;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-home-create-select {
+  appearance: none;
+  width: 100%;
+  padding: 10px 34px 10px 14px;
+  background: var(--wsv2-paper);
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 8px;
+  font: 500 14px/1.3 inherit;
+  color: var(--wsv2-ink);
+  cursor: pointer;
+  /* Inline caret — warm neutral */
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'><path d='M3 4.5l3 3 3-3' stroke='%23595348' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.wsv2-home-create-select:focus {
+  outline: none;
+  border-color: var(--wsv2-ink);
+  box-shadow: rgba(27, 54, 93, 0.12) 0 0 0 3px;
+}
+.wsv2-home-create-select:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.wsv2-home-create-submit {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 11px 16px;
+  background: var(--wsv2-accent);
+  color: var(--wsv2-paper);
+  border: 0;
+  border-radius: 8px;
+  font: 500 14px/1.2 inherit;
+  cursor: pointer;
+  transition: background 140ms ease, transform 140ms ease, opacity 140ms ease;
+}
+.wsv2-home-create-submit:hover:not(:disabled) { background: color-mix(in oklab, var(--wsv2-accent) 88%, black); }
+.wsv2-home-create-submit:active:not(:disabled) { transform: translateY(1px); }
+.wsv2-home-create-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* --- Account button (bottom of left column) --- */
+.wsv2-home-account {
+  margin-top: auto;
+  padding-top: 24px;
+  position: relative;
+  max-width: 320px;
+}
+.wsv2-home-account-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--wsv2-hairline);
+  border-radius: 10px;
+  background: var(--wsv2-bench-bg);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-home-account-btn:hover {
+  border-color: var(--wsv2-hairline-strong);
+  box-shadow: rgba(20, 20, 19, 0.04) 0 2px 8px;
+}
+.wsv2-home-account-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--wsv2-avatar-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wsv2-ink);
+  font: 600 12px/1 inherit;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+.wsv2-home-account-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.wsv2-home-account-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.wsv2-home-account-email {
+  font: 500 13px/1.2 inherit;
+  color: var(--wsv2-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wsv2-home-account-org {
+  font: 400 11px/1.2 inherit;
+  color: var(--wsv2-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wsv2-home-account-menu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--wsv2-bench-bg);
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 10px;
+  box-shadow: 0 16px 36px rgba(20, 20, 19, 0.12);
+  padding: 6px;
+  z-index: 10;
+}
+.wsv2-home-account-menu-item {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: 400 13px/1.2 inherit;
+  color: var(--wsv2-ink);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.wsv2-home-account-menu-item:hover { background: var(--wsv2-body-bg); }
+
+/* --- Browser (right column) --- */
+.wsv2-home-search { position: relative; flex: 0 0 auto; }
+.wsv2-home-search-input {
+  width: 100%;
+  height: 38px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 8px;
+  padding: 0 12px 0 34px;
+  background: var(--wsv2-bench-bg);
+  font: 400 14px/1 inherit;
+  color: var(--wsv2-ink);
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.wsv2-home-search-input::placeholder { color: var(--wsv2-ink-3); }
+.wsv2-home-search-input:focus {
+  border-color: var(--wsv2-ink);
+  box-shadow: 0 0 0 3px var(--wsv2-select-bg);
+}
+.wsv2-home-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--wsv2-ink-3);
+  pointer-events: none;
+}
+
+.wsv2-home-feature {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--wsv2-hairline);
+  border-radius: 12px;
+  background: var(--wsv2-peach);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 140ms ease, transform 140ms ease;
+  flex: 0 0 auto;
+}
+.wsv2-home-feature:hover {
+  border-color: var(--wsv2-hairline-strong);
+  transform: translateY(-1px);
+}
+.wsv2-home-feature-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.wsv2-home-feature-title {
+  font: 500 22px/1.2 var(--font-display);
+  color: var(--wsv2-ink);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.wsv2-home-feature-desc {
+  font: 400 13px/1.45 inherit;
+  color: var(--wsv2-ink-2);
+  margin: 0;
+  max-width: 360px;
+}
+.wsv2-home-feature-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 500 12px/1 inherit;
+  color: var(--wsv2-ink);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.wsv2-home-note {
+  color: var(--wsv2-ink-2);
+  font: 400 14px/1.5 inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.wsv2-home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+/* Responsive: stack on narrow viewports */
+@media (max-width: 960px) {
+  .wsv2-home-cols {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .wsv2-home-left {
+    border-right: 0;
+    border-bottom: 1px solid var(--wsv2-hairline);
+  }
+  .wsv2-home-left,
+  .wsv2-home-right {
+    padding: 28px 24px;
+  }
+}
+
+.wsv2-card-project {
+  background: var(--wsv2-bench-bg);
+  border: 1px solid var(--wsv2-hairline);
+  border-radius: 12px;
+  padding: 16px 16px 18px;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  outline: none;
+}
+.wsv2-card-project:hover,
+.wsv2-card-project:focus-visible {
+  border-color: var(--wsv2-hairline-strong);
+  box-shadow: rgba(20, 20, 19, 0.06) 0 6px 18px;
+  transform: translateY(-1px);
+}
+
+.wsv2-card-project-thumb {
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(27, 54, 93, 0.06), rgba(27, 54, 93, 0.02)),
+    var(--wsv2-cool);
+  border: 1px solid var(--wsv2-hairline);
+}
+
+.wsv2-card-project-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.wsv2-card-project-name {
+  font: 600 14px/1.3 inherit;
+  color: var(--wsv2-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wsv2-card-project-input {
+  font: 600 14px/1.3 inherit;
+  color: var(--wsv2-ink);
+  border: 1px solid var(--wsv2-hairline-strong);
+  border-radius: 6px;
+  padding: 4px 6px;
+  background: var(--wsv2-bench-bg);
+  outline: none;
+  width: 100%;
+}
+.wsv2-card-project-meta {
+  font: 400 12px/1.3 inherit;
+  color: var(--wsv2-ink-2);
+}
+
+.wsv2-card-project-rename {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  opacity: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 140ms ease;
+}
+.wsv2-card-project:hover .wsv2-card-project-rename,
+.wsv2-card-project:focus-within .wsv2-card-project-rename {
+  opacity: 1;
+}
+.wsv2-card-project-rename:hover {
+  color: var(--wsv2-ink);
+  border-color: var(--wsv2-hairline-strong);
+  background: var(--wsv2-bench-bg);
+}
+
+/* Bench gate — wraps ProjectGate so its boot/error UI fills the right
+   pane. The gate's children (Bench) already own layout; when gated,
+   the gate's .app-grid-loading div is centered in this container. */
+.wsv2-bench-gate {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--wsv2-bench-bg);
+  position: relative;
+}
+.wsv2-bench-gate > .app-grid-loading {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wsv2-ink-2);
+  font: 400 14px/1.5 inherit;
+}
+
+/* Comment lane — placement cursor on the page body + floating popover
+ * pinned at the click coordinates. Popover is position:fixed so it
+ * doesn't fight the page-body flexbox. */
+.wsv2-page-body.is-comment-placement,
+.wsv2-page-body.is-comment-placement iframe {
+  cursor: crosshair;
+}
+.wsv2-comment-hint {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 12, 8,0.72);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font: 500 12px/1 inherit;
+  letter-spacing: 0.01em;
+  pointer-events: none;
+  z-index: 40;
+}
+.wsv2-comment-popover {
+  z-index: 50;
+  background: var(--wsv2-body-bg);
+  border: 1px solid var(--wsv2-hairline);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(15, 12, 8,0.12);
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wsv2-comment-popover-title {
+  font: 500 13px/1 inherit;
+  letter-spacing: 0.04em;
+  font-variant: all-small-caps;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-comment-popover-input {
+  border: 1px solid var(--wsv2-hairline);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: 400 13px/1.45 inherit;
+  color: var(--wsv2-ink);
+  background: var(--wsv2-bench-bg);
+  resize: vertical;
+  min-height: 72px;
+}
+.wsv2-comment-popover-input:focus {
+  outline: none;
+  border-color: var(--wsv2-accent, #1B365D);
+}
+.wsv2-comment-popover-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Round-buffer chips — produced by Bench lane controllers, rendered
+ * inline in the chat composer as unified PromptPieceNode decorators.
+ * One per paragraph, stacked at the top of the editor above typed
+ * text. Every chip is the same component; the `--<source>` modifier
+ * tints it by producer (comment / edit / tweak / draw / …). */
+.wsv2-round-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--wsv2-hairline-strong);
+  background: var(--wsv2-peach);
+  font: 500 11px/1.2 inherit;
+  color: var(--wsv2-ink);
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  user-select: none;
+}
+.wsv2-round-chip-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+}
+.wsv2-round-chip-kind {
+  font: 500 11px/1 inherit;
+  letter-spacing: 0.04em;
+  font-variant: all-small-caps;
+  color: var(--wsv2-ink-2);
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+}
+.wsv2-round-chip-summary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.wsv2-round-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin-left: 2px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 120ms ease, color 120ms ease;
+}
+.wsv2-round-chip-remove:hover {
+  background: rgba(15, 12, 8, 0.08);
+  color: var(--wsv2-ink);
+}
+
+/* Hover preview — full text + full-size image + reference path.
+ *
+ * Portaled to <body> by PromptPieceNode so it escapes the composer's
+ * overflow:auto clip region. Position is `fixed` with `top` / `left`
+ * set inline from the chip's bounding rect. `pointer-events: none`
+ * so it doesn't steal interaction; no CSS :hover coupling — the
+ * chip's React state drives mount/unmount.
+ *
+ * IMPORTANT: this rule uses literal values for color + font instead
+ * of `var(--wsv2-*)` / `inherit`. All `--wsv2-*` custom properties
+ * are scoped to `.wsv2, .wsv2-home` (see top of this file), and the
+ * portal detaches the preview from that subtree. `inherit` on the
+ * font would pull from <body>, which isn't the chat pane. Keep the
+ * literal colors in sync if you change the `--wsv2-ink` / paper
+ * tokens. */
+.wsv2-round-chip-preview {
+  position: fixed;
+  min-width: 220px;
+  max-width: 360px;
+  padding: 8px 10px;
+  background: rgba(15, 12, 8, 0.92);  /* mirrors --wsv2-ink */
+  color: #faf8f1;                      /* mirrors --wsv2-paper */
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+  font: 400 12px/1.4 var(--font-body);
+  white-space: normal;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  /* Must beat the app's root `.wsv2` stacking context (position:fixed
+   * on the full viewport) — 1000 was below the chat pane's children
+   * like the ExecutorPicker, so the preview rendered underneath. */
+  z-index: 10000;
+}
+.wsv2-round-chip-preview-img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 4px;
+  display: block;
+}
+.wsv2-round-chip-preview-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.wsv2-round-chip-preview-ref {
+  font: 500 11px/1.3 ui-monospace, SFMono-Regular, Menlo, monospace;
+  opacity: 0.7;
+  word-break: break-all;
+}
+
+/* Per-source tints. New sources tint by adding another selector here;
+ * omitting a tint is fine (the chip falls back to the default peach). */
+.wsv2-round-chip--edit { background: var(--wsv2-peach); }
+.wsv2-round-chip--comment { background: var(--wsv2-cool); }
+.wsv2-round-chip--tweak {
+  background: var(--wsv2-select-bg);
+  border-color: var(--wsv2-hairline-strong);
+}
+.wsv2-round-chip--draw { background: var(--wsv2-cool); }
+
+/* "Save N" action that appears on the page toolbar next to Tweaks
+ * once the host has accumulated deltas from the in-page panel. */
+.wsv2-tweaks-save {
+  color: var(--color-accent);
+}
+.wsv2-tweaks-save:hover { background: var(--wsv2-select-bg); }
+
+/* Edit lane — bottom bar across the page view while Edit mode is on.
+ * Lists pending edits (dedup'd by selector+prop) and the explicit
+ * 'Send N edits' button that produces the chip. position:absolute so
+ * the iframe stays full-size; pointer-events active so the button is
+ * clickable. */
+.wsv2-edit-pending-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--wsv2-body-bg);
+  border-top: 1px solid var(--wsv2-hairline-strong);
+  padding: 8px 12px;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  z-index: 30;
+  max-height: 40%;
+}
+.wsv2-edit-pending-list {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.wsv2-edit-pending-empty {
+  font: italic 400 12px/1.4 inherit;
+  color: var(--wsv2-ink-3);
+  padding: 4px 0;
+}
+.wsv2-edit-pending-row {
+  font: 400 12px/1.3 ui-monospace, monospace;
+  color: var(--wsv2-ink);
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wsv2-edit-pending-selector {
+  color: var(--wsv2-ink-2);
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wsv2-edit-pending-sep {
+  color: var(--wsv2-ink-3);
+  flex: 0 0 auto;
+}
+.wsv2-edit-pending-prop {
+  color: var(--wsv2-ink);
+  flex: 0 0 auto;
+}
+.wsv2-edit-pending-value {
+  color: var(--color-accent);
+  flex: 0 0 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wsv2-edit-pending-send {
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
+
+/* --- Present dropdown --- */
+.wsv2-present-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.wsv2-present-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 240px;
+  background: var(--wsv2-surface, #fffdf8);
+  border: 1px solid var(--wsv2-hairline);
+  border-radius: 8px;
+  box-shadow: 0 12px 32px -12px rgba(26, 23, 20, 0.18);
+  padding: 4px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.wsv2-present-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 10px;
+  text-align: left;
+  cursor: pointer;
+  color: var(--wsv2-ink);
+  font: inherit;
+  transition: background 120ms ease;
+}
+.wsv2-present-item:hover { background: var(--wsv2-body-bg); }
+.wsv2-present-item-title {
+  grid-column: 1;
+  grid-row: 1;
+  font: 500 12px/1.2 inherit;
+}
+.wsv2-present-item-sub {
+  grid-column: 1;
+  grid-row: 2;
+  font: 400 11px/1.3 inherit;
+  color: var(--wsv2-ink-3);
+  margin-top: 2px;
+}
+.wsv2-present-item-kbd {
+  grid-column: 2;
+  grid-row: 1;
+  font: 400 10px/1 ui-monospace, monospace;
+  color: var(--wsv2-ink-3);
+  letter-spacing: 0.04em;
+}
+
+/* --- Present mode: hide bench chrome while presenting --- */
+.wsv2-bench[data-presenting] .wsv2-bench-tabs,
+.wsv2-bench[data-presenting] .wsv2-bench-subbar,
+.wsv2-bench[data-presenting] .wsv2-dropzone {
+  display: none;
+}
+
+/* ───────────────────── Modal: generic shell ───────────────────── */
+.wsv2-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(15, 12, 8, 0.24);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 72px 24px 24px;
+  overflow-y: auto;
+}
+.wsv2-modal {
+  background: var(--wsv2-bench-bg);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(15, 12, 8, 0.18);
+  max-width: 640px;
+  width: 100%;
+  max-height: calc(100vh - 96px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.wsv2-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 24px 20px;
+  border-bottom: 1px solid rgba(15, 12, 8, 0.08);
+}
+.wsv2-modal-heading { display: flex; flex-direction: column; gap: 6px; }
+.wsv2-modal-title {
+  font: 600 19px/1.25 var(--wsv2-font-display, inherit);
+  color: var(--wsv2-ink);
+  margin: 0;
+}
+.wsv2-modal-subtitle {
+  font: 400 14px/1.4 inherit;
+  color: var(--wsv2-ink-2);
+  margin: 0;
+}
+.wsv2-modal-close {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wsv2-ink-2);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.wsv2-modal-close:hover { background: rgba(15, 12, 8, 0.06); color: var(--wsv2-ink); }
+.wsv2-modal-body {
+  padding: 8px 0 16px;
+  overflow-y: auto;
+}
+
+/* ───────────────────── Skills modal ───────────────────── */
+.wsv2-skills-section { padding: 12px 0 4px; }
+.wsv2-skills-section-label {
+  font: 500 13px/1.2 inherit;
+  color: var(--wsv2-ink-2);
+  margin: 0;
+  padding: 0 24px 8px;
+  letter-spacing: 0.01em;
+}
+.wsv2-skills-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.wsv2-skills-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 24px;
+  border-radius: 8px;
+  margin: 0 10px;
+  transition: background 120ms ease;
+}
+.wsv2-skills-row:hover { background: rgba(15, 12, 8, 0.04); }
+.wsv2-skills-row-body {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.wsv2-skills-row-label {
+  font: 600 16px/1.3 inherit;
+  color: var(--wsv2-ink);
+}
+.wsv2-skills-row-desc {
+  font: 400 14px/1.4 inherit;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-skills-row-use {
+  appearance: none;
+  background: var(--wsv2-bench-bg);
+  border: 1px solid rgba(15, 12, 8, 0.14);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font: 500 13px/1 inherit;
+  color: var(--wsv2-ink);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateX(4px);
+  transition: opacity 120ms ease, transform 120ms ease, border-color 120ms ease;
+}
+.wsv2-skills-row:hover .wsv2-skills-row-use,
+.wsv2-skills-row:focus-within .wsv2-skills-row-use {
+  opacity: 1;
+  transform: translateX(0);
+}
+.wsv2-skills-row-use:hover { border-color: rgba(15, 12, 8, 0.3); }
+
+/* ==== Question form (ask-design-questions skill) ==========================
+ * Renders the JSON payload the agent emits to `.adits/questions.json`.
+ * Layout matches the screenshot: big serif title, one question per row,
+ * pill chips, textarea with paperclip, dashed dropzone, full-width
+ * ink-blue Continue button. Scoped under `.wsv2-qf`.
+ * ==========================================================================*/
+.wsv2-qf {
+  /* Locally resolve design tokens with fallbacks so the form renders
+     correctly both inside the workspace (`.wsv2` scope provides these)
+     and outside it (e.g., /questions-demo, future embeds). */
+  --qf-accent: var(--wsv2-accent, #1B365D);
+  --qf-ink: var(--wsv2-ink, rgba(15, 12, 8, 0.92));
+  --qf-ink-2: var(--wsv2-ink-2, rgba(15, 12, 8, 0.64));
+  --qf-ink-3: var(--wsv2-ink-3, rgba(15, 12, 8, 0.5));
+  --qf-bench-bg: var(--wsv2-bench-bg, #faf8f1);
+
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  padding: 48px 56px 56px;
+  max-width: 780px;
+  background: var(--qf-bench-bg);
+  border-radius: 4px;
+}
+.wsv2-qf-title {
+  font: 500 32px/1.2 var(--font-display, 'Newsreader', serif);
+  color: var(--qf-ink);
+  margin: 0 0 8px;
+  letter-spacing: -0.01em;
+}
+.wsv2-qf-questions {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+.wsv2-qf-question { display: flex; flex-direction: column; gap: 14px; }
+.wsv2-qf-label {
+  font: 600 16px/1.35 var(--font-body, 'Inter', sans-serif);
+  color: var(--qf-ink);
+}
+.wsv2-qf-hint {
+  font: 400 14px/1.5 var(--font-body, 'Inter', sans-serif);
+  color: var(--qf-ink-2);
+  margin-top: -6px;
+}
+.wsv2-qf-field { display: flex; flex-direction: column; gap: 10px; }
+
+/* Chips row -------------------------------------------------------------- */
+.wsv2-qf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.wsv2-qf-chip {
+  appearance: none;
+  background: var(--qf-bench-bg);
+  border: 1px solid rgba(15, 12, 8, 0.14);
+  border-radius: 999px;
+  padding: 9px 18px;
+  font: 500 14px/1.2 var(--font-body, 'Inter', sans-serif);
+  color: var(--qf-ink);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+.wsv2-qf-chip:hover { border-color: rgba(15, 12, 8, 0.3); }
+.wsv2-qf-chip.is-on {
+  background: var(--qf-accent);
+  border-color: var(--qf-accent);
+  color: #fffdf5;
+}
+.wsv2-qf-chip.is-meta {
+  background: transparent;
+  color: var(--qf-ink-2);
+  border-style: dashed;
+}
+.wsv2-qf-chip.is-meta.is-on {
+  background: var(--qf-accent);
+  border-style: solid;
+  color: #fffdf5;
+}
+.wsv2-qf-other-input {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(15, 12, 8, 0.14);
+  padding: 8px 6px;
+  font: 400 14px/1.3 var(--font-body, 'Inter', sans-serif);
+  color: var(--qf-ink);
+  min-width: 160px;
+  flex: 1 1 180px;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+.wsv2-qf-other-input:focus { border-color: var(--qf-accent); }
+.wsv2-qf-other-input::placeholder { color: var(--qf-ink-3); }
+
+/* Textarea --------------------------------------------------------------- */
+.wsv2-qf-textwrap { position: relative; display: flex; flex-direction: column; gap: 10px; }
+.wsv2-qf-textarea {
+  appearance: none;
+  background: #fdfbf3;
+  border: 1px solid rgba(15, 12, 8, 0.12);
+  border-radius: 6px;
+  padding: 16px 44px 16px 18px;
+  font: 400 15px/1.55 var(--font-body, 'Inter', sans-serif);
+  color: var(--qf-ink);
+  resize: vertical;
+  min-height: 120px;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+.wsv2-qf-textarea:focus { border-color: var(--qf-accent); }
+.wsv2-qf-textarea::placeholder { color: var(--qf-ink-3); }
+.wsv2-qf-paperclip {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 6px;
+  color: var(--qf-ink-3);
+  cursor: pointer;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  transition: color 120ms ease, background 120ms ease;
+}
+.wsv2-qf-paperclip:hover { color: var(--qf-ink); background: rgba(15, 12, 8, 0.06); }
+.wsv2-qf-attachments { display: flex; flex-wrap: wrap; gap: 8px; }
+.wsv2-qf-attachment {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(15, 12, 8, 0.1);
+  background: var(--qf-bench-bg);
+}
+.wsv2-qf-attachment img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.wsv2-qf-attachment-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(15, 12, 8, 0.7);
+  color: #fffdf5;
+  font: 500 14px/1 var(--font-body, 'Inter', sans-serif);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+/* Dropzone --------------------------------------------------------------- */
+.wsv2-qf-dropzone {
+  appearance: none;
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: 2px dashed rgba(15, 12, 8, 0.16);
+  border-radius: 10px;
+  padding: 44px 24px;
+  font: 500 15px/1.3 var(--font-body, 'Inter', sans-serif);
+  color: var(--qf-ink-2);
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+.wsv2-qf-dropzone:hover,
+.wsv2-qf-dropzone:focus-visible {
+  border-color: var(--qf-accent);
+  color: var(--qf-ink);
+  background: rgba(27, 54, 93, 0.03);
+  outline: none;
+}
+.wsv2-qf-dropzone.has-file { border-style: solid; color: var(--qf-ink); }
+.wsv2-qf-dropzone-filename { font-weight: 500; }
+.wsv2-qf-dropzone-remove {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  font: 500 13px/1 var(--font-body, 'Inter', sans-serif);
+  color: var(--qf-ink-3);
+  cursor: pointer;
+  align-self: flex-start;
+  text-decoration: underline;
+  text-decoration-color: rgba(15, 12, 8, 0.2);
+  text-underline-offset: 3px;
+}
+.wsv2-qf-dropzone-remove:hover { color: var(--qf-ink); }
+
+/* Footer ----------------------------------------------------------------- */
+.wsv2-qf-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+.wsv2-qf-submit {
+  appearance: none;
+  background: var(--qf-accent);
+  border: 0;
+  border-radius: 8px;
+  padding: 14px 36px;
+  font: 500 15px/1 var(--font-body, 'Inter', sans-serif);
+  color: #fffdf5;
+  cursor: pointer;
+  transition: transform 120ms ease, opacity 120ms ease, background 120ms ease;
+}
+.wsv2-qf-submit:hover { transform: translateY(-1px); }
+.wsv2-qf-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ==== Question-form bench takeover + chat stub ============================ */
+/* Right-pane layout when the form is active: center the form vertically
+ * and horizontally, warm parchment backdrop like the idle bench. */
+.wsv2-bench--form-takeover {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--wsv2-body-bg);
+  overflow: auto;
+}
+.wsv2-bench-body--form {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 64px 32px 80px;
+  overflow: auto;
+}
+
+/* Chat-side compact stub in place of the inline form. */
+.wsv2-qf-chat-stub {
+  font-style: italic;
+  color: var(--wsv2-ink-2);
+  padding: 10px 12px;
+  border-left: 2px solid var(--wsv2-accent);
+  background: rgba(27, 54, 93, 0.04);
+  border-radius: 0 6px 6px 0;
+}
+.wsv2-qf-chat-stub.is-active {
+  color: var(--wsv2-ink);
+  font-weight: 500;
+}
+.wsv2-qf-chat-stub.is-answered {
+  border-left-color: var(--wsv2-hairline-strong);
+  background: transparent;
+}
+
+/* ============================================================
+   STRICT-KAMI HOME OVERRIDES
+   ============================================================
+   Replaces the framed-topbar + 2-col-card-grid landing with
+   kami's single 960px column, hairline-only structure, serif
+   body, ghost CTAs, and section-numbered eyebrows.
+
+   Activate by adding `wsv2-home--kami` to the .wsv2-home root.
+   The modifier scopes all rules so legacy (un-suffixed) styles
+   stay intact for any other surface that consumes them. */
+
+.wsv2-home--kami {
+  display: block;
+  position: static;
+  inset: auto;
+  background: var(--color-bg);
+  /* Let the document scroll naturally — no internal scroll container.
+   * The legacy .wsv2-home rule sets `overflow: hidden; height: …` to
+   * trap scrolling for the chat-bench layout; kami home is a single
+   * flowing column that should use the page's own scroll. */
+  overflow: visible;
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  grid-template-rows: none;
+}
+
+/* Drop the framed topbar entirely. The Docs link + language switcher
+ * float to the top-right via .wsv2-home-meta-line and the global
+ * .lang-switcher--floating; the brand becomes a meta tag inside the
+ * page column. */
+.wsv2-home--kami .wsv2-home-topbar { display: none !important; }
+
+/* Single 960px column, mirroring kami.tw93.fun's main.page width.
+ * Generous top breathing room and bottom padding so the meta + h1
+ * pair sits exactly where the kami home does. */
+.wsv2-home--kami .wsv2-home-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 80px 64px 120px;
+  display: block;
+  font-family: var(--font-display);
+}
+
+/* Meta header row — tiny ALL-CAPS sans tag on the left, ghost link
+ * on the right, with hairline bottom under the H1. Mirrors kami's
+ * "DESIGN SYSTEM · V1.1.0 · 2026.04 [github] [x]" row. */
+.wsv2-home--kami .wsv2-home-meta-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ash);
+  margin-bottom: 28px;
+}
+.wsv2-home--kami .wsv2-home-meta-tag { color: var(--color-ash); }
+.wsv2-home--kami .wsv2-home-meta-link {
+  color: var(--color-charcoal);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.wsv2-home--kami .wsv2-home-meta-link:hover { color: var(--color-accent); }
+
+/* Massive serif mark + tagline — the entire visual hero is type.
+ * The mark uses Newsreader at the kami size; the second word/glyph
+ * (CJK 紙 in kami; "·" or a meta dot for adits) lands in ink-blue. */
+.wsv2-home--kami .wsv2-home-mark {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(72px, 11vw, 120px);
+  line-height: 1.05;
+  letter-spacing: -0.012em;
+  color: var(--color-ink);
+  margin: 0 0 28px;
+}
+.wsv2-home--kami .wsv2-home-mark-accent { color: var(--color-accent); }
+.wsv2-home--kami .wsv2-home-tagline {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(20px, 2.4vw, 26px);
+  line-height: 1.4;
+  color: var(--color-charcoal);
+  max-width: 32em;
+  margin: 0 0 40px;
+}
+
+/* Section blocks — the kami-eyebrow + kami-section-title pair from
+ * main.css already styles the heading; spacing rhythm here. */
+.wsv2-home--kami .wsv2-home-section {
+  padding: 56px 0 16px;
+}
+.wsv2-home--kami .wsv2-home-section + .wsv2-home-section,
+.wsv2-home--kami hr.kami-rule + .wsv2-home-section { padding-top: 0; }
+
+/* Two-column split — Start (form) on the left, Recent (project list)
+ * on the right. Vertical hairline divider via border-left on the
+ * right column, the same 1px mist used for horizontal rules. */
+.wsv2-home--kami .wsv2-home-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 56px;
+  overflow: visible;
+  min-height: 0;
+  align-items: start;
+}
+.wsv2-home--kami .wsv2-home-cols > .wsv2-home-section {
+  padding: 0;
+  overflow: visible;
+  min-height: 0;
+}
+.wsv2-home--kami .wsv2-home-cols > .wsv2-home-section + .wsv2-home-section {
+  padding-left: 56px;
+  border-left: 1px solid var(--color-mist);
+  margin-left: -56px;
+}
+
+/* Stack the split on narrow viewports — drop the vertical divider and
+ * fall back to the horizontal hairline between sections. */
+@media (max-width: 860px) {
+  .wsv2-home--kami .wsv2-home-cols {
+    grid-template-columns: 1fr;
+    row-gap: 56px;
+  }
+  .wsv2-home--kami .wsv2-home-cols > .wsv2-home-section + .wsv2-home-section {
+    padding-left: 0;
+    margin-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--color-mist);
+    padding-top: 56px;
+  }
+}
+
+/* Tabs become inline serif words separated by middle-dots — no pill
+ * background, no border-radius, no underline tab indicator. The
+ * active one is the only one in ink-blue. */
+.wsv2-home--kami .wsv2-home-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  border: 0;
+  margin: 0 0 32px;
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+}
+.wsv2-home--kami .wsv2-home-tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0 14px 0 0;
+  margin: 0 14px 0 0;
+  border-right: 1px solid var(--color-mist);
+  font: 500 17px/1.2 var(--font-display);
+  color: var(--color-ash);
+  cursor: pointer;
+  transition: color 140ms var(--ease-out);
+}
+.wsv2-home--kami .wsv2-home-tab:last-child {
+  border-right: 0;
+  margin-right: 0;
+  padding-right: 0;
+}
+.wsv2-home--kami .wsv2-home-tab:hover:not(:disabled) { color: var(--color-charcoal); }
+.wsv2-home--kami .wsv2-home-tab.is-active {
+  color: var(--color-accent);
+  background: transparent;
+  border-color: var(--color-mist);
+}
+
+/* Create form — no card wrapper, no rounded corners. Each field is a
+ * row with a hairline above. Inputs are unboxed: a single bottom
+ * border in mist, expanding to ink on focus. */
+.wsv2-home--kami .wsv2-home-create {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: none;
+}
+.wsv2-home--kami .wsv2-home-create-title { display: none; }
+
+.wsv2-home--kami .wsv2-home-create-input,
+.wsv2-home--kami .wsv2-home-create-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--color-mist);
+  border-radius: 0;
+  padding: 10px 0;
+  font: 500 19px/1.4 var(--font-display);
+  color: var(--color-ink);
+  width: 100%;
+  transition: border-color 160ms var(--ease-out);
+}
+.wsv2-home--kami .wsv2-home-create-input::placeholder,
+.wsv2-home--kami .wsv2-home-create-select::placeholder { color: var(--color-ash); font-style: italic; }
+.wsv2-home--kami .wsv2-home-create-input:focus,
+.wsv2-home--kami .wsv2-home-create-select:focus {
+  outline: none;
+  border-bottom-color: var(--color-ink);
+  box-shadow: none;
+}
+
+.wsv2-home--kami .wsv2-home-create-field { gap: 6px; }
+.wsv2-home--kami .wsv2-home-create-label {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ash);
+}
+
+/* Ghost-CTA submit. No solid pill — kami reserves ink-blue for tiny
+ * accents (numerals, links). The button is a serif underlined link. */
+.wsv2-home--kami .wsv2-home-create-submit {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  margin-top: 4px;
+  font: 500 19px/1.4 var(--font-display);
+  color: var(--color-accent);
+  cursor: pointer;
+  align-self: flex-start;
+  letter-spacing: 0;
+  transition: color 140ms var(--ease-out);
+}
+.wsv2-home--kami .wsv2-home-create-submit::after {
+  content: " →";
+  display: inline-block;
+  margin-left: 2px;
+  transition: transform 200ms var(--ease-out);
+}
+.wsv2-home--kami .wsv2-home-create-submit:hover:not(:disabled)::after { transform: translateX(3px); }
+.wsv2-home--kami .wsv2-home-create-submit:hover:not(:disabled) { color: var(--color-accent-hover); }
+
+.wsv2-home--kami .wsv2-home-privacy {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ash);
+  margin: 0;
+}
+
+/* Project list — kami row layout. No cards, no thumbnails, no grey
+ * placeholders. Each row is a hairline-separated entry with serif
+ * name on the left and ash-toned meta on the right. The whole row
+ * is the click target. */
+.wsv2-home--kami .wsv2-home-grid {
+  display: block;
+  border-top: 1px solid var(--color-mist);
+}
+.wsv2-home--kami .wsv2-card-project {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  column-gap: 24px;
+  padding: 18px 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-mist);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  transform: none !important;
+  cursor: pointer;
+  transition: color 140ms var(--ease-out);
+}
+.wsv2-home--kami .wsv2-card-project:hover,
+.wsv2-home--kami .wsv2-card-project:focus-visible {
+  background: transparent;
+  border-color: var(--color-mist);
+  box-shadow: none;
+}
+.wsv2-home--kami .wsv2-card-project:hover .wsv2-card-project-name { color: var(--color-accent); }
+
+.wsv2-home--kami .wsv2-card-project-thumb { display: none; }
+
+.wsv2-home--kami .wsv2-card-project-body {
+  gap: 0;
+  flex-direction: row;
+  align-items: baseline;
+  column-gap: 18px;
+}
+.wsv2-home--kami .wsv2-card-project-name {
+  font: 500 22px/1.3 var(--font-display);
+  color: var(--color-ink);
+  letter-spacing: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+  transition: color 140ms var(--ease-out);
+}
+.wsv2-home--kami .wsv2-card-project-meta {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-ash);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.wsv2-home--kami .wsv2-card-project-input {
+  font: 500 22px/1.3 var(--font-display);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--color-ink);
+  border-radius: 0;
+  padding: 4px 0;
+  color: var(--color-ink);
+}
+
+.wsv2-home--kami .wsv2-card-project-rename {
+  position: static;
+  background: transparent;
+  border: 0;
+  width: auto;
+  height: auto;
+  padding: 4px;
+  opacity: 0;
+  color: var(--color-ash);
+}
+.wsv2-home--kami .wsv2-card-project:hover .wsv2-card-project-rename { opacity: 1; }
+.wsv2-home--kami .wsv2-card-project-rename:hover { color: var(--color-accent); background: transparent; border: 0; }
+
+/* Search — minimal underlined input, no rounded box, no icon prefix. */
+.wsv2-home--kami .wsv2-home-search { margin-bottom: 28px; }
+.wsv2-home--kami .wsv2-home-search-icon { display: none; }
+.wsv2-home--kami .wsv2-home-search-input {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--color-mist);
+  border-radius: 0;
+  padding: 10px 0;
+  height: auto;
+  font: 500 17px/1.4 var(--font-display);
+  color: var(--color-ink);
+  width: 100%;
+}
+.wsv2-home--kami .wsv2-home-search-input::placeholder { color: var(--color-ash); font-style: italic; }
+.wsv2-home--kami .wsv2-home-search-input:focus {
+  outline: none;
+  border-bottom-color: var(--color-ink);
+  box-shadow: none;
+}
+
+/* Account widget — collapsed to a single text-line meta row at the
+ * very bottom; no avatar, no card border, no shadow. */
+.wsv2-home--kami .wsv2-home-account {
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid var(--color-mist);
+  max-width: none;
+}
+.wsv2-home--kami .wsv2-home-account-btn {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ash);
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.wsv2-home--kami .wsv2-home-account-btn:hover {
+  border: 0;
+  box-shadow: none;
+  color: var(--color-charcoal);
+}
+.wsv2-home--kami .wsv2-home-account-avatar { display: none; }
+.wsv2-home--kami .wsv2-home-account-info { flex-direction: row; gap: 8px; align-items: baseline; }
+.wsv2-home--kami .wsv2-home-account-email {
+  font: inherit;
+  color: var(--color-charcoal);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.wsv2-home--kami .wsv2-home-account-org { font: inherit; color: var(--color-ash); }
+.wsv2-home--kami .wsv2-home-account-menu {
+  background: var(--color-bg);
+  border: 1px solid var(--color-mist);
+  border-radius: 0;
+  box-shadow: none;
+}
+.wsv2-home--kami .wsv2-home-account-menu-item {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--color-ink);
+  border-radius: 0;
+}
+
+/* Empty / loading / error notes — serif italic in ash, no card. */
+.wsv2-home--kami .wsv2-home-note {
+  font: italic 500 17px/1.55 var(--font-display);
+  color: var(--color-ash);
+  padding: 24px 0;
+}
+.wsv2-home--kami .wsv2-home-note .wsv2-btn-solid {
+  background: transparent;
+  border: 0;
+  color: var(--color-accent);
+  font: 500 15px/1.4 var(--font-display);
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+

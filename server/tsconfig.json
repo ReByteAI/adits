@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    // `bundler` resolution is more forgiving than `nodenext` about missing
+    // `.js` extensions on relative imports — the shared `packages/shared`
+    // tree doesn't write `.js` on its internal imports and we don't want
+    // to touch its source just for this server's typecheck. At runtime
+    // tsx handles extensionless imports transparently.
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "include": ["**/*.ts"]
+}

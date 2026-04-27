@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="getStarted.docTitle">Get started with Adits</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="/logo-mark.png?v=4">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&family=Space+Grotesk:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    /* Strict-kami get-started — single 720px serif column,
+     * hairlines instead of cards, ghost CTA, kami-numeral lists,
+     * no shadows, no rounded code chips with cream background. */
+    .gs-page {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 80px 32px 120px;
+      color: var(--color-ink);
+    }
+    .gs-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font: 500 12px/1 var(--font-body);
+      color: var(--color-ash);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 56px;
+      transition: color var(--duration-fast) var(--ease-out);
+    }
+    .gs-back:hover { color: var(--color-accent); }
+
+    .gs-eyebrow {
+      font: 500 12px/1 var(--font-body);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-ash);
+      margin-bottom: 20px;
+    }
+    .gs-title {
+      font: 500 clamp(48px, 7vw, 68px)/1.05 var(--font-display);
+      letter-spacing: -0.012em;
+      margin: 0 0 28px;
+      color: var(--color-ink);
+    }
+    .gs-title em { font-style: normal; color: inherit; }
+    .gs-lede {
+      font: 500 21px/1.5 var(--font-display);
+      color: var(--color-charcoal);
+      margin: 0 0 48px;
+      max-width: 32em;
+    }
+
+    .gs-rule {
+      border: 0;
+      border-top: 1px solid var(--color-mist);
+      margin: 56px 0;
+    }
+
+    .gs-h2 {
+      font: 500 36px/1.1 var(--font-display);
+      letter-spacing: -0.005em;
+      margin: 0 0 28px;
+      color: var(--color-ink);
+    }
+    .gs-h2 em { font-style: normal; color: inherit; }
+
+    /* h3 numbered sub-section — kami serif numeral in ink-blue, no
+     * filled circle. Inline alignment via `align-items: baseline` on
+     * the row. */
+    .gs-h3 {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      column-gap: 24px;
+      align-items: baseline;
+      font: 500 26px/1.2 var(--font-display);
+      margin: 40px 0 14px;
+      color: var(--color-ink);
+    }
+    .gs-h3 .gs-num {
+      display: inline-block;
+      width: auto;
+      height: auto;
+      border: 0;
+      background: transparent;
+      color: var(--color-accent);
+      font: 500 26px/1 var(--font-display);
+      text-align: left;
+      margin: 0;
+      vertical-align: baseline;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Body paragraphs are SERIF — kami's signature. Inter only for
+     * eyebrow / nav / form chrome. */
+    .gs-p {
+      font: 500 17px/1.55 var(--font-display);
+      color: var(--color-charcoal);
+      margin: 0 0 16px;
+      max-width: 36em;
+    }
+    .gs-p strong { color: var(--color-ink); font-weight: 500; }
+    .gs-p em { color: var(--color-ink); font-style: normal; font-weight: 500; }
+    .gs-p code, .gs-ul code, .gs-table code {
+      font: 500 14px/1.4 var(--font-mono);
+      background: transparent;
+      border: 0;
+      padding: 0;
+      color: var(--color-accent);
+    }
+    .gs-a {
+      color: var(--color-accent);
+      text-decoration: none;
+      border-bottom: 1px solid var(--color-accent-soft);
+      transition: border-color var(--duration-fast) var(--ease-out);
+    }
+    .gs-a:hover { border-bottom-color: var(--color-accent); }
+
+    .gs-ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 24px;
+      border-top: 1px solid var(--color-mist);
+    }
+    .gs-ul > li {
+      font: 500 17px/1.55 var(--font-display);
+      color: var(--color-charcoal);
+      padding: 16px 0;
+      border-bottom: 1px solid var(--color-mist);
+      max-width: 36em;
+    }
+    .gs-ul li strong { color: var(--color-ink); font-weight: 500; }
+    .gs-ul li em { color: var(--color-ink); font-style: normal; font-weight: 500; }
+
+    /* Code blocks — flat ink background, no rounded shadow box. */
+    .gs-code {
+      background: var(--color-ink);
+      color: #eae6d9;
+      border-radius: 0;
+      border-left: 2px solid var(--color-accent);
+      padding: 24px 28px;
+      font: 400 14px/1.7 var(--font-mono);
+      overflow-x: auto;
+      margin: 28px 0 36px;
+      box-shadow: none;
+    }
+    .gs-code .c-dim { color: #9a9280; }
+    .gs-code .c-acc { color: #d7c57f; }
+
+    /* Definition-list table — kami's tabular form: thin top + bottom
+     * rule, label column in ash uppercase, body in serif. No zebra. */
+    .gs-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 28px 0 36px;
+      font: 500 15px/1.55 var(--font-display);
+      border-top: 1px solid var(--color-mist);
+    }
+    .gs-table th, .gs-table td {
+      text-align: left;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--color-mist);
+      vertical-align: top;
+    }
+    .gs-table th {
+      font: 500 12px/1.55 var(--font-body);
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      width: 160px;
+      padding-right: 24px;
+    }
+    .gs-table td { color: var(--color-charcoal); }
+
+    /* Callout — kami "rule of one" treatment: indent + ink-blue
+     * baseline rule. No cream card, no rounded corners. */
+    .gs-callout {
+      background: transparent;
+      border: 0;
+      border-left: 2px solid var(--color-accent);
+      padding: 4px 0 4px 24px;
+      margin: 32px 0;
+      border-radius: 0;
+    }
+    .gs-callout .gs-p:last-child { margin-bottom: 0; }
+    .gs-callout .gs-p {
+      font-size: 19px;
+      color: var(--color-ink);
+    }
+
+    /* Numbered steps — kami serif numerals in ink-blue, hairline-
+     * separated rows. Replaces the bordered-circle 1/2/3 pattern. */
+    .gs-steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+      margin: 28px 0 36px;
+      border-top: 1px solid var(--color-mist);
+    }
+    .gs-steps > li {
+      counter-increment: step;
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      column-gap: 24px;
+      align-items: baseline;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--color-mist);
+      font: 500 17px/1.55 var(--font-display);
+      color: var(--color-charcoal);
+    }
+    .gs-steps > li::before {
+      content: counter(step);
+      font: 500 26px/1 var(--font-display);
+      color: var(--color-accent);
+      font-variant-numeric: tabular-nums;
+    }
+    .gs-steps > li strong { color: var(--color-ink); font-weight: 500; }
+
+    /* CTA — ghost serif underline link with arrow. No solid pill. */
+    .gs-cta {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      background: transparent;
+      color: var(--color-accent);
+      text-decoration: none;
+      border-bottom: 1px solid var(--color-accent-soft);
+      padding: 0 0 2px;
+      font: 500 22px/1.4 var(--font-display);
+      transition: color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+    }
+    .gs-cta:hover { color: var(--color-accent-hover); border-bottom-color: var(--color-accent); background: transparent; }
+
+    .gs-footer {
+      margin-top: 96px;
+      padding-top: 28px;
+      border-top: 1px solid var(--color-mist);
+      font: italic 500 15px/1.55 var(--font-display);
+      color: var(--color-ash);
+    }
+    .gs-footer a {
+      color: var(--color-charcoal);
+      text-decoration: none;
+      border-bottom: 1px solid var(--color-mist);
+    }
+    .gs-footer a:hover { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+
+    @media (max-width: 640px) {
+      .gs-page { padding: 40px 20px 80px; }
+      .gs-title { font-size: 40px; }
+      .gs-lede { font-size: 18px; }
+      .gs-table th { width: auto; display: block; }
+      .gs-table td { display: block; padding-bottom: 4px; }
+      .gs-h3 { grid-template-columns: 36px 1fr; column-gap: 16px; }
+      .gs-steps > li { grid-template-columns: 36px 1fr; column-gap: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <main class="gs-page">
+    <a class="gs-back" href="/projects" data-i18n="getStarted.back">&larr; Back to projects</a>
+
+    <div class="gs-eyebrow" data-i18n="getStarted.eyebrow">Getting started</div>
+    <h1 class="gs-title" data-i18n="getStarted.title">Get started with Adits</h1>
+    <p class="gs-lede" data-i18n="getStarted.lede">
+      Adits is a workspace for making things with an AI coding agent. You drop in files,
+      describe what you want, and the agent does the actual work — writing HTML, editing
+      images, cropping PDFs, rearranging slides, whatever the project needs. A new file
+      lands back on disk. You iterate.
+    </p>
+    <p class="gs-p" data-i18n-html="getStarted.intro">
+      If you&rsquo;ve tried <strong>Claude Design</strong>, the surface will feel
+      familiar: a chat on the left, a canvas on the right. Adits takes the same idea and
+      rebuilds it around three principles.
+    </p>
+
+    <hr class="gs-rule">
+
+    <h2 class="gs-h2" data-i18n="getStarted.h2Different">What makes Adits different</h2>
+
+    <h3 class="gs-h3"><span class="gs-num">1</span><span data-i18n="getStarted.h3AgentNative">Agent‑native. The agent does the work — not us.</span></h3>
+    <p class="gs-p" data-i18n-html="getStarted.agentP1">
+      Claude Design ships an assistant that lives inside Anthropic&rsquo;s product. Adits
+      doesn&rsquo;t ship one. Every turn hands off to a coding CLI running on the same
+      machine: <strong>Claude Code</strong>, <strong>Gemini CLI</strong>,
+      <strong>Codex</strong>, or <strong>OpenCode</strong>. The agent owns the
+      filesystem, the edits, the tool calls, the multi-turn reasoning.
+    </p>
+    <p class="gs-p" data-i18n-html="getStarted.agentP2">
+      Adits is the <em>prompt IDE</em>. Every surface &mdash; the drop zone, the inline
+      tweak knobs, the element picker, the draw overlay, the questions form, the skill
+      chips &mdash; is a way to author the next instruction for the agent without
+      having to type it out. The agent is the runtime; Adits is how you compose the turn.
+    </p>
+    <ul class="gs-ul">
+      <li data-i18n-html="getStarted.agentBring"><strong>Bring your own CLI, your own subscription.</strong> If <code>claude</code> is already logged in on your machine, Adits uses it. No second bill, no captive model, no proxy in the middle.</li>
+      <li data-i18n-html="getStarted.agentSwap"><strong>Swap the agent per turn.</strong> Prefer Gemini for one kind of edit and Claude for another? Pick the executor in the composer. The rest of the app doesn&rsquo;t care which one runs.</li>
+    </ul>
+
+    <h3 class="gs-h3"><span class="gs-num">2</span><span data-i18n="getStarted.h3OpenSource">Open source and self‑hostable. Your files live on your machine.</span></h3>
+    <p class="gs-p" data-i18n-html="getStarted.osP1">
+      Adits ships in two modes. The hosted mode runs on our infra. The
+      <strong>self-hosted mode runs entirely on your laptop</strong> &mdash; one Node
+      process, one local directory, no cloud.
+    </p>
+    <p class="gs-p" data-i18n-html="getStarted.osP2">
+      In self-hosted mode there is no login flow, no provisioned VM, no webhook round-trip,
+      no Redis, no managed database. Every project is a plain folder under
+      <code>~/.adits/projects/&lt;id&gt;/</code>. Your edits happen in place, against the files
+      sitting on your disk. Sharing a project is <code>tar czf</code>. Backing one up is
+      <code>cp</code>.
+    </p>
+    <pre class="gs-code"><span class="c-dim"># clone, install, build</span>
+git clone https://github.com/rebyte-ai/adits
+cd adits &amp;&amp; bun install &amp;&amp; bun run build
+
+<span class="c-dim"># either `claude` is already logged in, or:</span>
+export <span class="c-acc">ANTHROPIC_API_KEY</span>=sk-ant-...
+
+export <span class="c-acc">ADITS_BACKEND</span>=local
+node --import tsx server/index.ts
+<span class="c-dim"># open http://localhost:4001</span></pre>
+    <p class="gs-p" data-i18n="getStarted.installNote">
+      That is the whole install. No Postgres to run, no Redis, no Docker, no account to
+      create.
+    </p>
+
+    <h3 class="gs-h3"><span class="gs-num">3</span><span data-i18n="getStarted.h3FileTypes">Not just for web prototypes.</span></h3>
+    <p class="gs-p" data-i18n="getStarted.fileTypesIntro">
+      Claude Design is scoped to HTML-shaped artifacts. Adits opens anything you can drop
+      into a folder, and every file type ships its own viewer and its own in-tab toolbar.
+    </p>
+    <table class="gs-table">
+      <tr>
+        <th data-i18n="getStarted.thHtml">HTML pages</th>
+        <td data-i18n="getStarted.tdHtml">Landing pages, wireframes, slide decks, dashboards, posters. Full editing lanes — Tweaks, Edit, Draw, Comment.</td>
+      </tr>
+      <tr>
+        <th data-i18n="getStarted.thImage">Images</th>
+        <td data-i18n="getStarted.tdImage">Canvas viewer with View / Marker / Draw / Crop. Crop exports a PNG you can hand back to the agent.</td>
+      </tr>
+      <tr>
+        <th data-i18n="getStarted.thPdf">PDFs</th>
+        <td data-i18n="getStarted.tdPdf">Page-by-page viewer with draw overlays; crop a region to PNG.</td>
+      </tr>
+      <tr>
+        <th data-i18n="getStarted.thOffice">Office docs</th>
+        <td data-i18n-html="getStarted.tdOffice"><code>.docx</code>, <code>.xlsx</code>, <code>.pptx</code> render in an embedded editor.</td>
+      </tr>
+      <tr>
+        <th data-i18n="getStarted.thAv">Audio & video</th>
+        <td data-i18n="getStarted.tdAv">Native player plus a timeline strip; segment a range to reference in the next turn.</td>
+      </tr>
+      <tr>
+        <th data-i18n="getStarted.thText">Text, Markdown, CSV</th>
+        <td data-i18n="getStarted.tdText">Inline render, no external dependency.</td>
+      </tr>
+      <tr>
+        <th data-i18n="getStarted.thSketch">Sketches</th>
+        <td data-i18n-html="getStarted.tdSketch"><code>.napkin</code> canvas — pen, shapes, arrows, sticky notes. Hand the agent a rough drawing instead of typing.</td>
+      </tr>
+    </table>
+    <p class="gs-p" data-i18n="getStarted.fileTypesNote">
+      Adding a new file type is one component — register it, and every tab, chip,
+      and thumbnail in the app picks it up automatically.
+    </p>
+
+    <hr class="gs-rule">
+
+    <h2 class="gs-h2" data-i18n="getStarted.h2Mental">The mental model</h2>
+    <p class="gs-p" data-i18n="getStarted.twoNouns">Two nouns, that's it:</p>
+    <ul class="gs-ul">
+      <li data-i18n-html="getStarted.nounProject"><strong>Project</strong> — a folder on disk. One project holds one body of related work.</li>
+      <li data-i18n-html="getStarted.nounPage"><strong>Page / file</strong> — anything inside it. The unit of work.</li>
+    </ul>
+    <p class="gs-p" data-i18n="getStarted.twoPanes">Two panes, that's it:</p>
+    <ul class="gs-ul">
+      <li data-i18n-html="getStarted.paneChat"><strong>Chat</strong> (left) — the conversation with the agent. It is the project's history: every turn that produced the files you're looking at.</li>
+      <li data-i18n-html="getStarted.paneBench"><strong>Bench</strong> (right) — the project's files, rendered as tabs. A permanent <em>Design Files</em> tab lists everything; clicking a file opens it in its own tab.</li>
+    </ul>
+    <div class="gs-callout">
+      <p class="gs-p" data-i18n-html="getStarted.callout">
+        One rule: <strong>the chat holds the conversation, the bench holds the files.</strong>
+        A file never appears in the chat. A chat turn never appears in the bench. Every
+        gesture you make on the bench side enqueues a chip into the composer —
+        you stack chips, add typed context, and send the whole batch as a single reviewable turn.
+      </p>
+    </div>
+
+    <hr class="gs-rule">
+
+    <h2 class="gs-h2" data-i18n="getStarted.h2Talk">Talking to the agent</h2>
+    <p class="gs-p" data-i18n="getStarted.talkIntro">You can always just type. You usually won't need to:</p>
+    <ul class="gs-ul">
+      <li data-i18n-html="getStarted.talkTweaks"><strong>Tweaks</strong> — inline knobs the agent wires up on demand. Pull a slider, flip a toggle, pick a color. Values stay in memory until you hit Save, then get packaged into one turn.</li>
+      <li data-i18n-html="getStarted.talkEdit"><strong>Edit</strong> — click an element on the page and change typography / sizing / layout in a properties panel. Each change applies live and queues a structured instruction for the agent.</li>
+      <li data-i18n-html="getStarted.talkDraw"><strong>Draw</strong> — a full-screen canvas overlay. Scribble strokes, drop sticky notes, circle the bit you want changed. On Send, the overlay goes along with the file.</li>
+      <li data-i18n-html="getStarted.talkComment"><strong>Comment</strong> — pin a free-form note to an element. Keep it as feedback for yourself, or <em>Send to Adits</em> to promote it into an agent instruction.</li>
+      <li data-i18n-html="getStarted.talkSkills"><strong>Skills</strong> — pre-made recipes the agent can invoke. <em>Make a deck</em>, <em>Wireframe</em>, <em>Interactive prototype</em>, and more. Pick one from the composer and the agent loads the matching playbook for this turn.</li>
+    </ul>
+
+    <hr class="gs-rule">
+
+    <h2 class="gs-h2" data-i18n="getStarted.h2FirstFive">Your first five minutes</h2>
+    <ol class="gs-steps">
+      <li data-i18n-html="getStarted.step1"><strong>Open the Welcome Workspace.</strong> A starter project is seeded on first login with a handful of sample files — a deck, an image, a PDF, a Markdown note. You have something to click on immediately.</li>
+      <li data-i18n-html="getStarted.step2"><strong>Drop a file</strong> into the chat or the bench. Uploads land in the project's <code>uploads/</code> folder. The agent can read any of them on the next turn.</li>
+      <li data-i18n-html="getStarted.step3"><strong>Ask for a deck.</strong> <em>"Make me a 5-slide deck about &lt;topic&gt;."</em> The agent picks up the <code>make-a-deck</code> skill, writes an HTML file that works standalone in any browser, and drops it into <em>Design Files</em>.</li>
+      <li data-i18n-html="getStarted.step4"><strong>Tweak it.</strong> Click into the deck's properties. Pull a slider. Circle a title with Draw. Add a sticky note. Hit Send. The agent applies everything in one turn.</li>
+      <li data-i18n-html="getStarted.step5"><strong>Export it.</strong> Page → HTML bundle. Deck → PPTX or PDF. Image → PNG. Your files are your files.</li>
+    </ol>
+
+    <p style="margin-top: 40px;">
+      <a class="gs-cta" href="/projects" data-i18n="getStarted.cta">Open a project →</a>
+    </p>
+
+    <div class="gs-footer" data-i18n="getStarted.footer">
+      Project in, files out, an agent you control in the middle.
+    </div>
+  </main>
+  <script src="/js/i18n-static.js" defer></script>
+</body>
+</html>

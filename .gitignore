@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+
+# Generated files
+dist/
+build/
+
+# Build artifacts
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Per-IDE skill mirrors of `skills/` — generated locally by each IDE's
+# Claude Code / coding-agent integration. The canonical copy is `skills/`;
+# users symlink or copy from there as their tool requires.
+.agents/
+.codex/
+.cursor/
+.gemini/
+.kiro/
+.opencode/
+.pi/
+.rovodev/
+.trae/
+.trae-cn/
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+.dev.vars
+
+# Cloudflare
+.wrangler/
+
+# User design context
+.impeccable.md
+.claude/scheduled_tasks.lock
+
+# Local-only Claude Code context (test creds, personal dev URLs, internal infra)
+CLAUDE.md
+CLAUDE-INTERNAL.md

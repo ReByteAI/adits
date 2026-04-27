@@ -1,0 +1,78 @@
+@mixin accordion-styles(
+  $label-bg-color,
+  $label-text-color,
+  $border-color,
+  $shadow-color: #000
+) {
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 5px 5px 0px $shadow-color;
+  border: 3.5px solid $border-color;
+
+  .accordion-label {
+    background: $label-bg-color;
+    color: $label-text-color;
+    border-bottom: 3.5px solid $border-color;
+  }
+}
+
+.accordion-tab {
+    position: absolute;
+    opacity: 0;
+    z-index: -1;
+}
+
+.accordion {
+    @include accordion-styles($black, $white, $black, $black);
+
+    &-label {
+        display: flex;
+        padding: 1em;
+        font-family: "Lexend Mega", "Public Sans", sans-serif;
+        font-weight: 900;
+        cursor: pointer;
+        transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+        &:hover {
+            background-color: #333;
+        }
+    }
+
+    &-content {
+        max-height: 0;
+        padding: 0 1em;
+        background: white;
+        transition: all 0.35s;
+        color: $black;
+    }
+}
+
+.accordion-tab:checked {
+    ~.accordion-content {
+        max-height: 100vh;
+        padding: 1em;
+    }
+}
+
+$accordion-variants: (
+  default: ($black, $white, $black, $black),
+  orange: ($orange, $black, $black, $black),
+  blue: ($blue, $white, $black, $black),
+  green: ($green, $white, $black, $black),
+  "sky-blue": ($sky-blue, $white, $black, $black),
+  "pale-red": ($pale-red, $white, $black, $black),
+  "pale-violet": ($pale-violet, $white, $black, $black),
+  "soft-blue": ($soft-blue, $white, $black, $black),
+  "pale-cyan": ($pale-cyan, $white, $black, $black),
+  "pale-yellow": ($pale-yellow, $black, $black, $black)
+);
+
+@each $variant, $colors in $accordion-variants {
+  .accordion.#{$variant} {
+    @include accordion-styles(
+      nth($colors, 1),
+      nth($colors, 2),
+      nth($colors, 3),
+      nth($colors, 4)
+    );
+  }
+}

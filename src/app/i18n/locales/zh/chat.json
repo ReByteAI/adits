@@ -1,0 +1,40 @@
+{
+  "removeSkill": "移除 {{skill}}",
+  "composer": {
+    "placeholderNew": "描述你想要创建的内容…",
+    "placeholderReply": "回复 Adits,或补充更多上下文…",
+    "skills": "技能",
+    "skillsTitle": "附加技能或设计系统",
+    "scrollLatest": "滚动到最新",
+    "resizeSidebar": "调整聊天栏宽度"
+  },
+  "header": {
+    "projectOverview": "项目概览",
+    "renameProject": "重命名项目",
+    "fallbackName": "项目",
+    "tabChat": "对话",
+    "tabHistory": "历史",
+    "newTask": "新任务"
+  },
+  "thread": {
+    "emptyChat": "在下方开始一个新任务。",
+    "emptyHistory": "暂无任务。",
+    "you": "你",
+    "agent": "Adits",
+    "working": "✦ 处理中…",
+    "detail": "详情",
+    "formActive": "我有几个问题 — 请查看右侧表单 →",
+    "formAnswered_one": "已询问 {{count}} 个问题。",
+    "formAnswered_other": "已询问 {{count}} 个问题。",
+    "msgFailed": "— 失败 —",
+    "msgCanceled": "— 已取消 —"
+  },
+  "status": {
+    "completed": "已完成",
+    "succeeded": "已完成",
+    "failed": "失败",
+    "canceled": "已取消",
+    "running": "进行中",
+    "pending": "等待中"
+  }
+}

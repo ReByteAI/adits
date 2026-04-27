@@ -1,0 +1,23 @@
+{
+  "docs": "文档",
+  "newProject": "新建项目",
+  "newWithTemplate": "新建{{template}}",
+  "namePlaceholder": "项目名称",
+  "designSystem": "设计系统",
+  "designSystemNone": "无",
+  "creating": "创建中…",
+  "createButton": "+ 创建",
+  "privacy": "默认只有你可以看到此项目。",
+  "searchPlaceholder": "搜索项目",
+  "loading": "加载项目中…",
+  "empty": "还没有项目 — 在左侧创建一个。",
+  "noMatch": "没有匹配 “{{q}}” 的项目。",
+  "loadError": "无法加载项目。",
+  "personalWorkspace": "个人工作区",
+  "signedIn": "已登录",
+  "fileCount_one": "{{count}} 个文件",
+  "fileCount_other": "{{count}} 个文件",
+  "fileCountEmpty": "空",
+  "updatedAt": "更新于 {{date}}",
+  "accountSettings": "账户设置"
+}

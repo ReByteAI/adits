@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="privacy.docTitle">Privacy — Adits</title>
+  <meta name="description" content="How Adits handles your data.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="/logo-mark.png?v=4">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <style>
+    /* Strict-kami privacy — single 640px serif column. Headings sit
+     * above body in serif weight 500; lists use hairlines, not bullet
+     * indents. Ink-blue accent reserved for links only. */
+    .privacy-page {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 80px 32px 120px;
+      color: var(--color-ink);
+    }
+
+    .privacy-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font: 500 12px/1 var(--font-body);
+      color: var(--color-ash);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 56px;
+      transition: color var(--duration-fast) var(--ease-out);
+    }
+    .privacy-back:hover { color: var(--color-accent); }
+
+    .privacy-eyebrow {
+      font: 500 12px/1 var(--font-body);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-ash);
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font: 500 clamp(48px, 7vw, 64px)/1.05 var(--font-display);
+      letter-spacing: -0.012em;
+      color: var(--color-ink);
+      margin: 0 0 16px;
+    }
+
+    .privacy-updated {
+      font: italic 500 14px/1.4 var(--font-display);
+      color: var(--color-ash);
+      margin: 0 0 56px;
+    }
+
+    h2 {
+      font: 500 26px/1.2 var(--font-display);
+      letter-spacing: -0.005em;
+      color: var(--color-ink);
+      margin: 56px 0 16px;
+    }
+
+    p {
+      font: 500 17px/1.55 var(--font-display);
+      color: var(--color-ink);
+      margin: 0 0 16px;
+      max-width: 36em;
+    }
+
+    a {
+      color: var(--color-accent);
+      text-decoration: none;
+      border-bottom: 1px solid var(--color-accent-soft);
+      transition: border-color var(--duration-fast) var(--ease-out);
+    }
+    a:hover { border-bottom-color: var(--color-accent); }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 20px;
+      border-top: 1px solid var(--color-mist);
+    }
+    li {
+      font: 500 17px/1.55 var(--font-display);
+      color: var(--color-ink);
+      padding: 14px 0;
+      border-bottom: 1px solid var(--color-mist);
+    }
+    li strong { font-weight: 500; }
+  </style>
+</head>
+<body>
+  <div class="grain-overlay" aria-hidden="true"></div>
+
+  <main class="privacy-page">
+    <a href="/" class="privacy-back" data-i18n="privacy.back">&larr; Back to Adits</a>
+
+    <p class="privacy-eyebrow" data-i18n="privacy.eyebrow">Privacy</p>
+    <h1 data-i18n="privacy.title">Privacy Policy</h1>
+    <p class="privacy-updated" data-i18n="privacy.updated">Last updated: April 23, 2026</p>
+
+    <p data-i18n="privacy.intro">Adits helps you edit and transform files — PDFs, images, and documents — by describing what you want changed. This page explains what information we collect when you use Adits, and how we handle it.</p>
+
+    <h2 data-i18n="privacy.h2Collect">What we collect</h2>
+    <p data-i18n="privacy.collect1">When you create an account, we store an email address and any identity information you provide through our authentication provider (Clerk). When you use Adits, we also store:</p>
+    <ul>
+      <li data-i18n="privacy.collectFiles">The files you upload and the files Adits produces in response</li>
+      <li data-i18n="privacy.collectPrompts">The prompts and operations you apply to those files</li>
+      <li data-i18n="privacy.collectMeta">Basic project metadata (names, timestamps, settings)</li>
+    </ul>
+    <p data-i18n="privacy.noSell">We do not sell personal data. We do not use your files or prompts to train models.</p>
+
+    <h2 data-i18n="privacy.h2Third">Third parties</h2>
+    <p data-i18n="privacy.thirdIntro">Adits uses a small number of third-party services to operate:</p>
+    <ul>
+      <li><strong>Clerk</strong> — <span data-i18n="privacy.thirdClerk">authentication and account management</span></li>
+      <li><strong>Rebyte</strong> — <span data-i18n="privacy.thirdRebyte">runs the AI agents that edit your files</span></li>
+      <li><strong>Google Cloud</strong> — <span data-i18n="privacy.thirdGcp">hosting, database, and file storage</span></li>
+      <li><strong>Google Analytics</strong> — <span data-i18n="privacy.thirdGa">traffic measurement on the marketing homepage only; not used inside the app</span></li>
+    </ul>
+    <p data-i18n="privacy.thirdNote">Each of these services has its own privacy policy governing the data they receive.</p>
+
+    <h2 data-i18n="privacy.h2Cookies">Cookies</h2>
+    <p data-i18n="privacy.cookies">Adits uses cookies that Clerk sets to keep you signed in. The marketing homepage uses Google Analytics cookies. We do not use cookies for advertising.</p>
+
+    <h2 data-i18n="privacy.h2Retention">Retention and deletion</h2>
+    <p data-i18n="privacy.retention">Files and projects you create are retained for as long as your account is active. If you delete a project, its files are removed from our systems. If you want to delete your account entirely, contact us and we will remove all associated data.</p>
+
+    <h2 data-i18n="privacy.h2Rights">Your rights</h2>
+    <p data-i18n="privacy.rights">You can request a copy of the data we hold about you, correct it, or ask for it to be deleted. Email us at the address below.</p>
+
+    <h2 data-i18n="privacy.h2Contact">Contact</h2>
+    <p><span data-i18n="privacy.contact">Questions about this policy? Email</span> <a href="mailto:privacy@adits.app">privacy@adits.app</a>.</p>
+  </main>
+  <script src="/js/i18n-static.js" defer></script>
+</body>
+</html>

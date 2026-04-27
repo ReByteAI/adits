@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NeoBrutalismCSS</title>
+    <meta name="description"
+        content="NeoBrutalismCSS is a CSS framework that brings the aesthetics of NeoBrutalism to your web projects." />
+    <meta name="author" content="Matias Fandiño" />
+    <meta name="keywords"
+        content="css, css3, front-end, framework, html, html5, kickstarter, less, responsive, neo-brutalism, library, neumorphism, neobrutalism" />
+    <meta property="og:title" content="NeoBrutalismCSS" />
+    <meta property="og:description"
+        content="NeoBrutalismCSS is a CSS framework that brings the aesthetics of NeoBrutalism to your web projects." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="NeoBrutalismCSS" />
+    <meta property="og:url" content="https://matifandy8.github.io/NeoBrutalismCSS/" />
+    <meta property="og:image" content="https://matifandy8.github.io/NeoBrutalismCSS/assets/logo.png" />
+    <meta property="og:image:alt" content="NeoBrutalismCSS Logo" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="NeoBrutalismCSS" />
+    <meta name="twitter:description"
+        content="NeoBrutalismCSS is a CSS framework that brings the aesthetics of NeoBrutalism to your web projects." />
+    <meta name="twitter:image" content="https://matifandy8.github.io/NeoBrutalismCSS/assets/logo.png" />
+    <meta name="twitter:image:alt" content="NeoBrutalismCSS Logo" />
+    <link rel="icon" href="assets/logo.png" type="image/x-icon">
+    <link rel="shortcut icon" href="assets/logo.png" type="image/x-icon">
+    <link rel="icon" sizes="32x32" href="assets/logo.png" type="image/x-icon">
+    <link rel="icon" sizes="16x16" href="assets/logo.png" type="image/x-icon">
+    <link rel="icon" href="assets/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="index.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Mega:wght@700&family=Public+Sans&display=swap"
+        rel="stylesheet" />
+
+        <script>
+            const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = isLocal
+              ? '/dist/index.css'
+              : 'https://cdn.jsdelivr.net/gh/matifandy8/NeoBrutalismCSS/dist/index.min.css';
+            document.head.appendChild(link);
+          </script>
+</head>
+
+<body>
+    <header>
+        <nav id="top">
+            <div class="logo">
+                <a href="index.html"><img src="assets/logo-with-text.png" alt="logo" /></a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="docs.html">Docs</a></li>
+                <li>
+                    <a href="https://github.com/matifandy8/NeoBrutalismCSS" target="_blank">
+                        <img src="assets/github.svg" alt="GitHub"></a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+    <section class="presentation">
+        <h1 class="title">NeoBrutalismCSS</h1>
+        <p class="description">
+            Design framework that embraces the aesthetics of neo-brutalism in web
+        </p>
+        <div class="producthunt">
+            <a href="https://www.producthunt.com/products/neobrutalismcss?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-neobrutalismcss&#0045;2" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=987865&theme=light&t=1751585750927" alt="NeoBrutalismCSS - Relaunching&#0032;a&#0032;bold&#0032;CSS&#0032;framework&#0032;for&#0032;brutalist&#0032;UIs | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+        </div>
+        <p class="catchy-copy">NeobrutalismCSS weighs less than 100KB. Lightweight, fast, and brutal.</p>    
+        <a href="docs.html" class="nb-button blue">Getting Started</a>
+    </section>
+    
+    <main>
+        <section id="started" class="getting-started">
+            <h2>Getting Started</h2>
+            <p class="component-description">
+                To begin using NeoBrutalismCSS in your web projects, follow these simple steps:
+            </p>
+            <ol>
+                <li>
+                    <p><strong>Installation:</strong> Download the NeoBrutalismCSS library from the official website or
+                        include it via a package manager like npm, pnpm or yarn.</p>
+                    <figure class="highlight">
+                        <pre><button class="copy tooltip copy-button" data-section="buttons"><img src="assets/copy.svg" alt="copy"> <span class="tooltiptext">Copy to clipboard</span></button><code class="language-bash" data-lang="bash"><span class="name">npm</span> <span class="name">install </span><span class="name">neobrutalismcss</span></code></pre>
+                    </figure>
+
+                    <p><strong>Include CSS:</strong> Include the NeoBrutalismCSS stylesheet in the <code>&lt;head&gt;</code> section of your HTML document:</p>
+                    </p>
+                    <figure class="highlight">
+                        <pre><button class="copy tooltip copy-button" data-section="buttons"><img src="assets/copy.svg" alt="copy"> <span class="tooltiptext">Copy to clipboard</span></button><code class="language-bash" data-lang="bash"><span class="tag">&lt;link</span> <span class="class">rel=</span><span class="name">"stylesheet"</span> <span class="class">href=</span><span class="name">"https://unpkg.com/neobrutalismcss@latest"</span> <span class="tag">/&gt;</span></code></pre>
+                    </figure>
+                    <p>or using CDN:</p>
+                    <figure class="highlight">
+                        <pre><button class="copy tooltip copy-button" data-section="buttons"><img src="assets/copy.svg" alt="copy"> <span class="tooltiptext">Copy to clipboard</span></button><code class="language-bash" data-lang="bash"><span class="tag">&lt;link</span> <span class="class">rel=</span><span class="name">"stylesheet"</span> <span class="class">href=</span><span class="name">"https://cdn.jsdelivr.net/gh/matifandy8/NeoBrutalismCSS/dist/index.min.css"</span> <span class="tag">/&gt;</span></code></pre>
+                    </figure>
+                </li>
+                <li>
+                    <p><strong>HTML Structure:</strong> Create your web page using the provided CSS classes and
+                        components, as demonstrated in the documentation.</p>
+                </li>
+                <li>
+                    <p><strong>Customization:</strong> Customize the styles and components according to your project's
+                        design requirements by overriding NeoBrutalismCSS classes.</p>
+                </li>
+            </ol>
+            <p class="component-description">
+                That's it! You're now ready to create web designs with the unique aesthetics of NeoBrutalism using
+                NeoBrutalismCSS.
+            </p>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <img src="assets/logo.png" alt="NeoBrutalismCSS Logo" />
+            </div>
+            <div class="footer-links">
+                <ul>
+                    <li><a href="https://github.com/matifandy8/NeoBrutalismCSS" target="_blank">
+                            <img src="assets/github.svg" alt="GitHub"></a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-buttons">
+            <a href="https://github.com/matifandy8/NeoBrutalismCSS/issues" target="_blank" class="nb-button blue"><i
+                    class="fas fa-bug"></i> Report an issue</a>
+        </div>
+        <div class="footer-made-by">
+            <p>Made by Matias Fandiño</p>
+        </div>
+        <div class="copyright">
+            &copy; 2023 NeoBrutalismCSS. All rights reserved.
+        </div>
+    </footer>
+
+
+    <script src="script.js"></script>
+</body>
+
+</html>
