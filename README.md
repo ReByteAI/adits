@@ -2,8 +2,12 @@
   <img src="./public/logo-mark.png" alt="Adits" width="160" />
 </p>
 
-<h1 align="center">Adits</h1>
-<p align="center"><em>Edit your files, effortlessly.</em></p>
+<h1 align="center">Never Edit</h1>
+<p align="center"><em>You don't edit anymore. Adits does.</em></p>
+
+<p align="center">
+  <a href="https://adits.ai"><strong>adits.ai</strong></a> · live, in public beta · <a href="https://adits.ai">try the hosted version</a>
+</p>
 
 ---
 

@@ -1,7 +1,7 @@
 {
   "name": "adits",
   "version": "0.1.0",
-  "description": "Adits — edit your files, effortlessly",
+  "description": "Adits — never edit. Adits does.",
   "license": "SEE LICENSE FILE",
   "type": "module",
   "scripts": {
