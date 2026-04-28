@@ -44,7 +44,15 @@ async function main(): Promise<void> {
   top.get('/project/*', serveStatic({ root: env.STATIC_DIR, path: 'app.html' }))
   top.get('/ui-elements', serveStatic({ root: env.STATIC_DIR, path: 'ui-elements.html' }))
   top.get('/get-started', serveStatic({ root: env.STATIC_DIR, path: 'get-started.html' }))
-  top.get('/questions-demo', serveStatic({ root: env.STATIC_DIR, path: 'questions-demo.html' }))
+  top.get('/privacy', serveStatic({ root: env.STATIC_DIR, path: 'privacy.html' }))
+  top.get('/speaker-notes', serveStatic({ root: env.STATIC_DIR, path: 'speaker-notes.html' }))
+  top.get('/blog', serveStatic({ root: env.STATIC_DIR, path: 'blog.html' }))
+  // /blog/<slug> → blog/<slug>.html. Hono's :slug param + rewrite path.
+  top.get('/blog/:slug', (c, next) => {
+    const slug = c.req.param('slug')
+    if (!/^[a-z0-9-]+$/.test(slug)) return next()
+    return serveStatic({ root: env.STATIC_DIR, path: `blog/${slug}.html` })(c, next)
+  })
   top.get('*', serveStatic({ root: env.STATIC_DIR }))
 
   serve({ fetch: top.fetch, port: env.PORT }, info => {

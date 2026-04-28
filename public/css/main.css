@@ -2990,6 +2990,16 @@ code {
   color: var(--color-ink);
 }
 
+.hero-top-link {
+  font: 500 14px/1 var(--font-body);
+  color: var(--color-ash);
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  padding: 8px 4px;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+.hero-top-link:hover { color: var(--color-ink); }
+
 .github-link-btn {
   display: flex;
   align-items: center;

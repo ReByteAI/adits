@@ -18,9 +18,12 @@ export default defineConfig({
             '/get-started': '/get-started.html',
             '/privacy': '/privacy.html',
             '/speaker-notes': '/speaker-notes.html',
+            '/blog': '/blog.html',
           }
           if (rewrites[pathOnly]) req.url = rewrites[pathOnly]
           else if (pathOnly.startsWith('/project/')) req.url = '/app.html'
+          // /blog/<slug> → public/blog/<slug>.html
+          else if (/^\/blog\/[a-z0-9-]+$/.test(pathOnly)) req.url = `${pathOnly}.html`
           next()
         })
       },
