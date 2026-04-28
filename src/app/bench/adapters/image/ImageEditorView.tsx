@@ -30,6 +30,7 @@ import { CropOverlay, type CropRect } from '../../draw/CropOverlay.tsx'
 import { useRoundStore } from '../../../workspace-v2/round/store.ts'
 import CommentPopover from '../../../workspace-v2/comment/CommentPopover.tsx'
 import { useBenchEditorSlot } from '../../../workspace-v2/bench-editor-slot.ts'
+import { useFileBlob } from '../../../queries/useFileBlob.ts'
 
 type Mode = 'view' | 'draw' | 'comment'
 
@@ -76,7 +77,7 @@ export default function ImageEditorView({ file }: EditorViewProps) {
     setCropRect(null)
     setCommentPending(null)
     maskRef.current?.clearWithoutUndo()
-  }, [file.src])
+  }, [file.id])
 
   // Clear crop + pending popover when leaving comment mode so switching
   // away doesn't leave a stray popover or rect behind.
@@ -186,7 +187,16 @@ export default function ImageEditorView({ file }: EditorViewProps) {
     }
   }, [mode])
 
-  if (!file.src) {
+  // Fetch a same-origin blob URL with proper Bearer auth. Binding the
+  // <img> directly to `file.src` (an `/api/app/files/<id>/download`
+  // route) breaks because (a) browsers can't add an Authorization
+  // header to <img> requests, and (b) `crossOrigin="anonymous"` strips
+  // cookies too — so the request lands at the API with no creds and
+  // 401s. The blob URL is same-origin, doesn't need crossOrigin, and
+  // canvas pixel reads (export.ts) work cleanly.
+  const { data: blobUrl } = useFileBlob(file.id)
+
+  if (!file.src && !blobUrl) {
     return <div className="bench-editor-empty">No image preview available</div>
   }
 
@@ -275,15 +285,16 @@ export default function ImageEditorView({ file }: EditorViewProps) {
 
       <div className="bench-image-editor-stage">
         <div className="bench-image-editor-frame">
-          <img
-            ref={imgRef}
-            src={file.src}
-            alt={file.name}
-            crossOrigin="anonymous"
-            className="bench-image-editor-img"
-            draggable={false}
-            onLoad={() => setImgLoaded(true)}
-          />
+          {blobUrl && (
+            <img
+              ref={imgRef}
+              src={blobUrl}
+              alt={file.name}
+              className="bench-image-editor-img"
+              draggable={false}
+              onLoad={() => setImgLoaded(true)}
+            />
+          )}
           {imgLoaded && (
             <MaskCanvas
               ref={maskRef}
