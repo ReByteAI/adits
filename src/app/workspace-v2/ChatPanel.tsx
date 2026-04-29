@@ -318,7 +318,7 @@ export default function ChatPanel() {
         setSending(false)
       }
     }
-  }, [projectId, loadedTaskId, executor, createChatTask, sendFollowUp])
+  }, [projectId, loadedTaskId, executor, pickedSkills, createChatTask, sendFollowUp])
 
   const handleNewTask = () => {
     autoLoadedForProjectRef.current = projectId ?? null
