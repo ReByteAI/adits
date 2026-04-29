@@ -267,7 +267,7 @@ export default function ChatPanel() {
     const tidAtSend = loadedTaskId
     setSending(true)
     try {
-      const execOpts = { executor, model: DEFAULT_MODEL_FOR[executor] }
+      const execOpts = { executor, model: DEFAULT_MODEL_FOR[executor], skills: pickedSkills.length ? pickedSkills : undefined }
       if (!tidAtSend) {
         const newId = await createChatTask(pid, text, execOpts)
         if (useStore.getState().activeProjectId === pid) {

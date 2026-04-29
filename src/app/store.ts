@@ -129,13 +129,13 @@ interface ProjectStore {
    *  On success, swaps the optimistic id for the server-assigned one and
    *  returns that id so the caller can load the task into the Chat tab.
    *  Rolls back on failure. */
-  createChatTask: (projectId: string, prompt: string, opts?: { executor?: string; model?: string }) => Promise<string>
+  createChatTask: (projectId: string, prompt: string, opts?: { executor?: string; model?: string; skills?: string[] }) => Promise<string>
   /** Send a follow-up prompt to an existing task. Thin wrapper around the
    *  API call — doesn't touch the task list (the task row keeps its id and
    *  status; only its internal prompts grow). The caller is responsible
    *  for any session-scoped UI state (e.g., echoing the prompt in the
    *  active thread) since we don't store per-task message lists yet. */
-  sendFollowUp: (taskId: string, prompt: string, opts?: { executor?: string; model?: string }) => Promise<string | null>
+  sendFollowUp: (taskId: string, prompt: string, opts?: { executor?: string; model?: string; skills?: string[] }) => Promise<string | null>
   /** Cancel a running task. Optimistically transitions the row in
    *  tasksByProject to 'canceled'. Rolls back if the API call fails.
    *  The eventual task.canceled webhook is a no-op against the terminal row. */
@@ -769,7 +769,7 @@ export const useStore = create<ProjectStore>((set, get) => ({
   createChatTask: async (projectId, prompt, opts) => {
     const trimmed = prompt.trim()
     if (!trimmed) throw new Error('prompt is required')
-    const resp = await apiCreateTask(projectId, { prompt: trimmed, executor: opts?.executor, model: opts?.model })
+    const resp = await apiCreateTask(projectId, { prompt: trimmed, executor: opts?.executor, model: opts?.model, skills: opts?.skills })
     // Refresh the project's task list so History / TasksPanel show the
     // new task. ChatPanel keys off `loadedTaskId`; once we return `resp.id`
     // it'll fetch /content for the first prompt row and open the per-prompt
@@ -788,7 +788,7 @@ export const useStore = create<ProjectStore>((set, get) => ({
   sendFollowUp: async (taskId, prompt, opts) => {
     const trimmed = prompt.trim()
     if (!trimmed) throw new Error('prompt is required')
-    const res = await apiSendTaskPrompt(taskId, { prompt: trimmed, executor: opts?.executor, model: opts?.model })
+    const res = await apiSendTaskPrompt(taskId, { prompt: trimmed, executor: opts?.executor, model: opts?.model, skills: opts?.skills })
     // Refresh tasksByProject for any panels (TasksPanel, History) that
     // key off it. ChatPanel triggers its own /content refetch via
     // `localRefetch` after handleSend resolves.

@@ -331,7 +331,7 @@ export interface CreateTaskResponse {
 /** Create a new task on a project (a.k.a. "start a new chat"). */
 export async function createTask(
   projectId: string,
-  body: { prompt: string; executor?: string; model?: string },
+  body: { prompt: string; executor?: string; model?: string; skills?: string[] },
 ): Promise<CreateTaskResponse> {
   return apiJSON<CreateTaskResponse>(`/projects/${projectId}/tasks`, {
     method: 'POST',
@@ -342,7 +342,7 @@ export async function createTask(
 /** Send a follow-up prompt to an existing task. */
 export async function sendTaskPrompt(
   taskId: string,
-  body: { prompt: string; executor?: string; model?: string },
+  body: { prompt: string; executor?: string; model?: string; skills?: string[] },
 ): Promise<{ promptId?: string }> {
   return apiJSON<{ promptId?: string }>(`/tasks/${taskId}/prompts`, {
     method: 'POST',
