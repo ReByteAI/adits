@@ -267,7 +267,16 @@ export default function ChatPanel() {
     const tidAtSend = loadedTaskId
     setSending(true)
     try {
-      const execOpts = { executor, model: DEFAULT_MODEL_FOR[executor], skills: pickedSkills.length ? pickedSkills : undefined }
+      const execOpts = {
+        executor,
+        model: DEFAULT_MODEL_FOR[executor],
+        // Picker stores bare slugs (`make-a-deck`); relay reads
+        // `github:owner/repo#slug` and runs `npx skills add` on the VM,
+        // bypassing the DB lookup path used for featured/private skills.
+        skills: pickedSkills.length
+          ? pickedSkills.map(s => `github:rebyteai/rebyte-skills#${s}`)
+          : undefined,
+      }
       if (!tidAtSend) {
         const newId = await createChatTask(pid, text, execOpts)
         if (useStore.getState().activeProjectId === pid) {
