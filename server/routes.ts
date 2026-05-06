@@ -1086,7 +1086,7 @@ app.post('/projects/:pid/edit', requireAuth, async (c) => {
     body: JSON.stringify({
       prompt: agentPrompt,
       executor: body.executor ?? 'claude',
-      model: body.model ?? 'claude-sonnet-4.6',
+      model: body.model ?? 'deepseek-v4-pro',
       workspaceId: wid,
       skills: withDefaultSkills(),
     }),

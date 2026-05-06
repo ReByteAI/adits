@@ -30,8 +30,8 @@ export const EXECUTOR_LABELS: Record<ExecutorType, string> = {
  *  runner picks the right upstream. In local mode `model` is ignored; the
  *  executor name alone decides which CLI binary to spawn. */
 export const DEFAULT_MODEL_FOR: Record<ExecutorType, string> = {
-  claude: 'claude-sonnet-4.6',
-  codex: 'gpt-5.4',
+  claude: 'deepseek-v4-pro',
+  codex: 'gpt-5.4-mini',
   gemini: 'auto-gemini-3',
 }
 
