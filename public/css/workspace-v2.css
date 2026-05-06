@@ -1198,8 +1198,17 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   color: var(--wsv2-ink);
 }
 .wsv2-dropzone-icon {
+  appearance: none;
+  background: transparent;
+  border: 0;
   color: var(--wsv2-ink-3);
+  cursor: pointer;
+  padding: 0;
   margin-bottom: 2px;
+}
+.wsv2-dropzone-icon:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-accent) 55%, white);
+  outline-offset: 4px;
 }
 .wsv2-dropzone.is-active .wsv2-dropzone-icon { color: var(--color-accent); }
 .wsv2-dropzone-title {
@@ -3326,4 +3335,3 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   text-underline-offset: 4px;
   cursor: pointer;
 }
-

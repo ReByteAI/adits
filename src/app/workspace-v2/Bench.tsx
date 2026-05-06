@@ -211,6 +211,7 @@ export default function Bench() {
    *  PageToolbar for HTML. Tracked as state so FileEditorTab re-renders
    *  (and its portal attaches) once the slot mounts. */
   const [editorSlotEl, setEditorSlotEl] = useState<HTMLDivElement | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // Shared iframe bridge — owns the postMessage transport, inject-on-
   // load, and the ready handshake. Edit + Comment lanes subscribe to
@@ -358,14 +359,23 @@ export default function Bench() {
     return () => window.removeEventListener('keydown', onKey)
   }, [activeFile, presentMode, onPresentTab])
 
+  const uploadFiles = useCallback(async (incoming: File[]) => {
+    if (!projectId) return
+    for (const file of incoming) await addFile(projectId, file)
+  }, [projectId, addFile])
+
   // Drop zone: upload into the project; store.addFile handles the SDK path.
   const onDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault()
     setDragDepth(0)
-    if (!projectId) return
-    const dropped = Array.from(e.dataTransfer.files)
-    for (const f of dropped) await addFile(projectId, f)
-  }, [projectId, addFile])
+    await uploadFiles(Array.from(e.dataTransfer.files))
+  }, [uploadFiles])
+
+  const onFileInputChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    e.target.value = ''
+    await uploadFiles(files)
+  }, [uploadFiles])
 
   // Clipboard paste → upload like a drop. Honours images (screenshots)
   // and any File items the OS/app put on the clipboard.
@@ -610,12 +620,26 @@ export default function Bench() {
       </div>
 
       <div className={`wsv2-dropzone${isDragOver ? ' is-active' : ''}`}>
-        <svg className="wsv2-dropzone-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-          <path d="M10 13V3m0 0L6 7m4-4 4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M3.5 13v2.5A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-        </svg>
+        <button
+          type="button"
+          className="wsv2-dropzone-icon"
+          aria-label={t('bench.dropFilesTitle')}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M10 13V3m0 0L6 7m4-4 4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3.5 13v2.5A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </button>
         <div className="wsv2-dropzone-title">{t('bench.dropFilesTitle')}</div>
         <div className="wsv2-dropzone-sub">{t('bench.dropFilesSub')}</div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          hidden
+          multiple
+          onChange={onFileInputChange}
+        />
       </div>
 
       {isDragOver && (
