@@ -329,6 +329,7 @@ export const useStore = create<ProjectStore>((set, get) => ({
         name: p.name,
         workspaceId: p.workspace_id,
         files: [],
+        updatedAt: p.updated_at ?? p.created_at,
         // Fetched projects are already on the server — never in flight.
         provisioning: false,
         fileServerRoot: p.file_server_root,
@@ -498,6 +499,7 @@ export const useStore = create<ProjectStore>((set, get) => ({
       name,
       workspaceId: '',
       files: [],
+      updatedAt: new Date().toISOString(),
       provisioning: true,
     }
 
@@ -521,7 +523,7 @@ export const useStore = create<ProjectStore>((set, get) => ({
       set(s => ({
         projects: s.projects.map(pr =>
           pr.id === id
-            ? { ...pr, workspaceId: p.workspace_id, fileServerRoot: p.file_server_root, provisioning: false }
+            ? { ...pr, workspaceId: p.workspace_id, updatedAt: p.updated_at ?? p.created_at, fileServerRoot: p.file_server_root, provisioning: false }
             : pr
         ),
       }))
@@ -573,6 +575,7 @@ export const useStore = create<ProjectStore>((set, get) => ({
         name: resp.name,
         workspaceId: resp.workspace_id,
         files: [],
+        updatedAt: resp.updated_at ?? resp.created_at,
         provisioning: false,
         fileServerRoot: resp.file_server_root,
       }

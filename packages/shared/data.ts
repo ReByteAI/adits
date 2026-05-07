@@ -59,6 +59,9 @@ export interface Project {
   id: string
   name: string
   files: FileData[]
+  /** Server-authored project timestamp from `projects.updated_at`.
+   *  Used by the home/project-card overview, where file lists are not loaded. */
+  updatedAt?: string
   /** Rebyte workspace ID. Empty string while optimistically created. */
   workspaceId: string
   /** True while the optimistic create is in flight. */
