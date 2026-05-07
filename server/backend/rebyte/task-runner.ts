@@ -125,6 +125,18 @@ async function loadPromptMeta(taskId: string): Promise<Map<string, PromptMeta>> 
   return new Map(rows.map(row => [row.id, { executor: row.executor, model: row.model }]))
 }
 
+async function loadLatestTaskBinding(taskId: string): Promise<PromptMeta | null> {
+  const hasPromptModel = await supportsPromptModel()
+  return db.first<PromptMeta>(
+    `SELECT executor, ${hasPromptModel ? 'model' : 'NULL::text AS model'}
+       FROM prompts
+      WHERE task_id = $1
+      ORDER BY submitted_at DESC
+      LIMIT 1`,
+    [taskId],
+  )
+}
+
 export const rebyteTaskRunner: TaskRunner = {
   async create({ userId, projectId, prompt, extras }) {
     const hasPromptModel = await supportsPromptModel()
@@ -242,14 +254,25 @@ export const rebyteTaskRunner: TaskRunner = {
     const owned = await resolveOwnedTask(userId, taskId)
     if (!owned) return null
     try {
+      const latestBinding = await loadLatestTaskBinding(taskId)
+      const executor = latestBinding?.executor
+        ?? (typeof extras?.executor === 'string' ? extras.executor : 'claude')
+      const model = latestBinding?.model
+        ?? (typeof extras?.model === 'string' ? extras.model : null)
+      const upstreamExtras: Record<string, unknown> = { ...(extras ?? {}) }
+      delete upstreamExtras.executor
+      delete upstreamExtras.model
       const result = await rebyteJSON<{ promptId: string }>(`/tasks/${taskId}/prompts`, {
         method: 'POST',
-        body: JSON.stringify({ ...(extras ?? {}), prompt }),
+        body: JSON.stringify({
+          ...upstreamExtras,
+          prompt,
+          executor,
+          ...(model !== null ? { model } : {}),
+        }),
         apiKey: owned.key,
       })
 
-      const executor = typeof extras?.executor === 'string' ? extras.executor : 'claude'
-      const model = typeof extras?.model === 'string' ? extras.model : null
       if (hasPromptModel) {
         await db.run(
           `INSERT INTO prompts (id, task_id, prompt, executor, model, status, submitted_at)

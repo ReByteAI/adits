@@ -296,6 +296,18 @@ async function loadPromptsForTask(taskId: string): Promise<TaskContent['prompts'
   return out
 }
 
+async function loadLatestTaskBinding(taskId: string): Promise<{ executor: string; model: string | null } | null> {
+  const hasPromptModel = await supportsPromptModel()
+  return db.first<{ executor: string; model: string | null }>(
+    `SELECT executor, ${hasPromptModel ? 'model' : 'NULL::text AS model'}
+       FROM prompts
+      WHERE task_id = $1
+      ORDER BY submitted_at DESC
+      LIMIT 1`,
+    [taskId],
+  )
+}
+
 /** Sleep but interruptible by an AbortSignal. Resolves early on abort. */
 function abortableSleep(ms: number, signal: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -379,8 +391,6 @@ export const localTaskRunner: TaskRunner = {
 
   async followup({ userId, taskId, prompt, extras }) {
     const hasPromptModel = await supportsPromptModel()
-    const executor = typeof extras?.executor === 'string' ? extras.executor : 'claude'
-    const model = typeof extras?.model === 'string' ? extras.model : null
     const row = await db.first<{ project_id: string }>(
       `SELECT t.project_id
          FROM tasks t
@@ -389,6 +399,14 @@ export const localTaskRunner: TaskRunner = {
       [userId, taskId],
     )
     if (!row) return null
+
+    const latestBinding = await loadLatestTaskBinding(taskId)
+    const executor = typeof extras?.executor === 'string'
+      ? extras.executor
+      : (latestBinding?.executor ?? 'claude')
+    const model = typeof extras?.model === 'string'
+      ? extras.model
+      : (latestBinding?.model ?? null)
 
     const promptId = randomUUID()
 

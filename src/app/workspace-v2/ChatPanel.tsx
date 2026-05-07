@@ -20,8 +20,6 @@ import { FramesView } from './FramesView.tsx'
 import {
   DEFAULT_EXECUTOR,
   DEFAULT_MODEL_FOR,
-  isExecutorType,
-  isModelForExecutor,
   type ExecutorModelId,
   type ExecutorType,
 } from '../../../packages/shared/executors'
@@ -138,7 +136,6 @@ export default function ChatPanel() {
    *  re-populating with tasks[0] — once the user has opted into the
    *  new-task flow for a given project, we respect that until they leave. */
   const autoLoadedForProjectRef = useRef<string | null>(null)
-  const seededSelectionForTaskRef = useRef<string | null>(null)
 
   // Reset chat state when the active project changes — loadedTaskId,
   // session-scoped follow-ups, and the `sending` indicator all belong
@@ -202,7 +199,6 @@ export default function ChatPanel() {
   // scrolled-up state would carry over.
   useEffect(() => {
     setAtBottom(true)
-    seededSelectionForTaskRef.current = null
   }, [loadedTaskId])
   // Clear stale content only when the loaded task changes. On bumps we keep
   // the last transcript visible until a newer fetch resolves, so transient
@@ -270,23 +266,6 @@ export default function ChatPanel() {
   }, [content, loadedTaskId, setActiveForm])
   useEffect(() => () => setActiveForm(null), [setActiveForm])
 
-  useEffect(() => {
-    if (!loadedTaskId || !content || content.prompts.length === 0) return
-    if (seededSelectionForTaskRef.current === loadedTaskId) return
-    const latest = content.prompts[content.prompts.length - 1]
-    if (!isExecutorType(latest.executor)) {
-      seededSelectionForTaskRef.current = loadedTaskId
-      return
-    }
-    setExecutor(latest.executor)
-    if (latest.model && isModelForExecutor(latest.executor, latest.model)) {
-      setModel(latest.model)
-    } else {
-      setModel(DEFAULT_MODEL_FOR[latest.executor])
-    }
-    seededSelectionForTaskRef.current = loadedTaskId
-  }, [loadedTaskId, content])
-
   const handleExecutorChange = useCallback((next: ExecutorType) => {
     setExecutor(next)
     setModel(DEFAULT_MODEL_FOR[next])
@@ -302,9 +281,7 @@ export default function ChatPanel() {
     const tidAtSend = loadedTaskId
     setSending(true)
     try {
-      const execOpts = {
-        executor,
-        model,
+      const baseOpts = {
         // Picker stores bare slugs (`make-a-deck`); relay reads
         // `github:owner/repo#slug` and runs `npx skills add` on the VM,
         // bypassing the DB lookup path used for featured/private skills.
@@ -313,11 +290,17 @@ export default function ChatPanel() {
           : undefined,
       }
       if (!tidAtSend) {
+        const execOpts = {
+          ...baseOpts,
+          executor,
+          model,
+        }
         const newId = await createChatTask(pid, text, execOpts)
         if (useStore.getState().activeProjectId === pid) {
           setLoadedTaskId(newId)
         }
       } else {
+        const execOpts = baseOpts
         // Kick a `/content` refetch on every follow-up so Claude's
         // streamed response appears without waiting for a terminal SSE
         // event. Bumps after the POST resolves (below) via setLocalRefetch.
@@ -423,8 +406,12 @@ export default function ChatPanel() {
         // editor contents are not.
         <>
           <div className="wsv2-composer-executor-row">
-            <ExecutorPicker value={executor} onChange={handleExecutorChange} disabled={sending} />
-            <ModelPicker executor={executor} value={model} onChange={setModel} disabled={sending} />
+            {!loadedTaskId && (
+              <>
+                <ExecutorPicker value={executor} onChange={handleExecutorChange} disabled={sending} />
+                <ModelPicker executor={executor} value={model} onChange={setModel} disabled={sending} />
+              </>
+            )}
             <button
               type="button"
               className="wsv2-composer-skills-btn"
