@@ -291,16 +291,12 @@ function ProjectCard({
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(project.name)
 
-  const fileCount = project.files.length
   const lastDate = project.files
     .map(f => f.date)
     .filter(Boolean)
     .sort()
     .slice(-1)[0]
-  const meta = [
-    fileCount === 0 ? t('fileCountEmpty') : t('fileCount', { count: fileCount }),
-    lastDate && t('updatedAt', { date: lastDate }),
-  ].filter(Boolean).join(' · ')
+  const meta = lastDate ? t('updatedAt', { date: lastDate }) : ''
 
   const commit = async () => {
     const next = value.trim()
