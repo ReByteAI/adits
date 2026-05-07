@@ -185,6 +185,7 @@ export default function ChatPanel() {
   const [content, setContent] = useState<TaskContent | null>(null)
   const [localRefetch, setLocalRefetch] = useState(0)
   const authToken = useAuthToken()
+  const terminalRefreshTimersRef = useRef<number[]>([])
   // Auto-scroll to bottom on new content when the user was already pinned
   // there. Responds to real content growth (fetchTaskContent resolves to a
   // new object) and to optimistic follow-up insertions.
@@ -210,15 +211,32 @@ export default function ChatPanel() {
     if (!loadedTaskId || loadedTaskId.startsWith('tmp-')) return
     let cancelled = false
     void (async () => {
-      try {
-        const data = await fetchTaskContent(loadedTaskId)
-        if (!cancelled) setContent(data)
-      } catch (err) {
-        if (!cancelled) console.warn('[chat] fetchTaskContent failed:', err)
+      const retryDelaysMs = [0, 1200, 4000] as const
+      for (let i = 0; i < retryDelaysMs.length; i += 1) {
+        if (retryDelaysMs[i] > 0) {
+          await new Promise(resolve => window.setTimeout(resolve, retryDelaysMs[i]))
+        }
+        if (cancelled) return
+        try {
+          const data = await fetchTaskContent(loadedTaskId)
+          if (!cancelled) setContent(data)
+          return
+        } catch (err) {
+          if (cancelled) return
+          const isLast = i === retryDelaysMs.length - 1
+          if (isLast) {
+            console.warn('[chat] fetchTaskContent failed:', err)
+          }
+        }
       }
     })()
     return () => { cancelled = true }
   }, [loadedTaskId, localRefetch])
+
+  useEffect(() => () => {
+    for (const id of terminalRefreshTimersRef.current) window.clearTimeout(id)
+    terminalRefreshTimersRef.current = []
+  }, [])
 
   // Refetch /content + project file list when any FramesView reports its
   // prompt reached terminal status. /content gets the new frames +
@@ -232,8 +250,23 @@ export default function ChatPanel() {
   // Invalidation forces every mounted FileCard to refetch its blob.
   const loadProjectFiles = useStore(s => s.loadProjectFiles)
   const bumpIframeReloadKey = useStore(s => s.bumpIframeReloadKey)
+  const scheduleTerminalContentRefresh = useCallback(() => {
+    for (const id of terminalRefreshTimersRef.current) window.clearTimeout(id)
+    terminalRefreshTimersRef.current = []
+    const burstDelaysMs = [0, 1500, 5000] as const
+    for (const delayMs of burstDelaysMs) {
+      if (delayMs === 0) {
+        setLocalRefetch(n => n + 1)
+        continue
+      }
+      const timerId = window.setTimeout(() => {
+        setLocalRefetch(n => n + 1)
+      }, delayMs)
+      terminalRefreshTimersRef.current.push(timerId)
+    }
+  }, [])
   const handlePromptTerminal = useCallback(() => {
-    setLocalRefetch(n => n + 1)
+    scheduleTerminalContentRefresh()
     if (projectId) {
       void loadProjectFiles(projectId).catch(err =>
         console.warn('[chat] post-terminal file refresh failed:', err))
@@ -243,7 +276,7 @@ export default function ChatPanel() {
     // existing HTML file leave the file id and url unchanged, so the
     // iframe keeps showing the pre-edit content otherwise.
     bumpIframeReloadKey()
-  }, [projectId, loadProjectFiles, bumpIframeReloadKey])
+  }, [projectId, loadProjectFiles, bumpIframeReloadKey, scheduleTerminalContentRefresh])
 
   // Publish the latest unanswered `ask-design-questions` payload into the
   // store so the Bench (right pane) can render it as a full-pane takeover.

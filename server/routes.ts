@@ -33,6 +33,7 @@ import { db } from './db.js'
 import { env } from './env.js'
 import { rebyteJSON } from './backend/rebyte/rebyte.js'
 import { requireUserRebyteKey } from './backend/rebyte/rebyte-auth.js'
+import { isTransientSandboxLifecycleError } from './backend/rebyte/sandbox.js'
 import { fileServer, fileStore, taskRunner } from './backend/index.js'
 import { classifyPath, detectType, type FileRole } from '../packages/shared/file-types/index.js'
 import {
@@ -497,7 +498,15 @@ app.get('/projects/:projectId/files', requireAuth, async (c) => {
   if (!project) return c.json({ error: 'Project not found' }, 404)
 
   const links = await selectLinkRows(projectId, userId)
-  const sandboxEntries = await fileStore.list(c.get('userId'), projectId, SANDBOX_FILE_ROOT)
+  let sandboxEntries
+  try {
+    sandboxEntries = await fileStore.list(c.get('userId'), projectId, SANDBOX_FILE_ROOT)
+  } catch (err) {
+    if (isTransientSandboxLifecycleError(err)) {
+      return c.json({ error: 'Sandbox is resuming or pausing. Please retry in a few seconds.' }, 409)
+    }
+    throw err
+  }
   const visibleEntries = sandboxEntries.filter(e => isVisibleSandboxFile(e.path))
 
   const nowIso = new Date().toISOString()

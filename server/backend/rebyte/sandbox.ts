@@ -18,6 +18,8 @@ import { rebyteJSON } from './rebyte.js'
 import { requireUserRebyteKey } from './rebyte-auth.js'
 import { ensureProjectFileServerInstalled } from './file-server-install.js'
 
+const SANDBOX_RETRY_DELAYS_MS = [500, 1500, 3000] as const
+
 export interface AgentComputerCreateResponse {
   id: string
   status: string
@@ -91,20 +93,61 @@ export async function connectProjectSandbox(
   return sbx
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message
+  return String(err)
+}
+
+export function isTransientSandboxLifecycleError(err: unknown): boolean {
+  const msg = errorMessage(err).toLowerCase()
+  return msg.includes('sandbox not found')
+    || msg.includes('http 404')
+    || msg.includes('is pausing')
+    || msg.includes('snapshot in progress')
+    || msg.includes('resume failed')
+    || msg.includes('transition failed')
+}
+
+async function withSandboxRetry<T>(
+  opName: string,
+  fn: () => Promise<T>,
+): Promise<T> {
+  let attempt = 0
+  for (;;) {
+    try {
+      return await fn()
+    } catch (err) {
+      if (!isTransientSandboxLifecycleError(err) || attempt >= SANDBOX_RETRY_DELAYS_MS.length) {
+        throw err
+      }
+      const delayMs = SANDBOX_RETRY_DELAYS_MS[attempt]
+      console.warn(`[sandbox] ${opName} retrying after transient lifecycle error: ${errorMessage(err)}`)
+      attempt += 1
+      await sleep(delayMs)
+    }
+  }
+}
+
 export async function writeProjectFile(
   userId: string,
   projectId: string,
   path: string,
   bytes: Uint8Array,
 ): Promise<void> {
-  const sbx = await connectProjectSandbox(userId, projectId)
-  const lastSlash = path.lastIndexOf('/')
-  if (lastSlash > 0) {
-    await sbx.files.makeDir(path.slice(0, lastSlash))
-  }
-  // @eng0/sdk's files.write takes ArrayBuffer; peel the Uint8Array view.
-  const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
-  await sbx.files.write(path, ab)
+  await withSandboxRetry('writeProjectFile', async () => {
+    const sbx = await connectProjectSandbox(userId, projectId)
+    const lastSlash = path.lastIndexOf('/')
+    if (lastSlash > 0) {
+      await sbx.files.makeDir(path.slice(0, lastSlash))
+    }
+    // @eng0/sdk's files.write takes ArrayBuffer; peel the Uint8Array view.
+    const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+    await sbx.files.write(path, ab)
+  })
 }
 
 export async function readProjectFile(
@@ -112,8 +155,10 @@ export async function readProjectFile(
   projectId: string,
   path: string,
 ): Promise<Uint8Array> {
-  const sbx = await connectProjectSandbox(userId, projectId)
-  return sbx.files.read(path, { format: 'bytes' })
+  return withSandboxRetry('readProjectFile', async () => {
+    const sbx = await connectProjectSandbox(userId, projectId)
+    return sbx.files.read(path, { format: 'bytes' })
+  })
 }
 
 export async function removeProjectFile(
@@ -121,8 +166,10 @@ export async function removeProjectFile(
   projectId: string,
   path: string,
 ): Promise<void> {
-  const sbx = await connectProjectSandbox(userId, projectId)
-  await sbx.files.remove(path)
+  await withSandboxRetry('removeProjectFile', async () => {
+    const sbx = await connectProjectSandbox(userId, projectId)
+    await sbx.files.remove(path)
+  })
 }
 
 export interface SandboxFileEntry {
@@ -138,15 +185,17 @@ export async function listProjectFiles(
   root: string,
   depth = 5,
 ): Promise<SandboxFileEntry[]> {
-  const sbx = await connectProjectSandbox(userId, projectId)
-  await sbx.files.makeDir(root)
-  const entries = await sbx.files.list(root, { depth })
-  return entries
-    .filter(e => e.type === 'file')
-    .map(e => ({
-      path: e.path,
-      name: e.name,
-      size: e.size,
-      mtime: e.modifiedTime ? e.modifiedTime.toISOString() : null,
-    }))
+  return withSandboxRetry('listProjectFiles', async () => {
+    const sbx = await connectProjectSandbox(userId, projectId)
+    await sbx.files.makeDir(root)
+    const entries = await sbx.files.list(root, { depth })
+    return entries
+      .filter(e => e.type === 'file')
+      .map(e => ({
+        path: e.path,
+        name: e.name,
+        size: e.size,
+        mtime: e.modifiedTime ? e.modifiedTime.toISOString() : null,
+      }))
+  })
 }
