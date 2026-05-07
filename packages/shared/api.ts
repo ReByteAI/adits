@@ -284,6 +284,7 @@ export interface TaskPrompt {
   status: string
   userPrompt: string
   executor: string
+  model: string | null
   submittedAt: string
   completedAt: string | null
   frames: TaskFrame[]

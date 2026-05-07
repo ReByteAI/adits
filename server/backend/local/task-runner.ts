@@ -31,6 +31,13 @@ const SYSTEM_PROMPT_TEXT: string = existsSync(SYSTEM_PROMPT_PATH)
   ? readFileSync(SYSTEM_PROMPT_PATH, 'utf8')
   : ''
 
+let promptModelColumnPromise: Promise<boolean> | null = null
+
+function supportsPromptModel(): Promise<boolean> {
+  promptModelColumnPromise ??= db.columnExists('prompts', 'model')
+  return promptModelColumnPromise
+}
+
 function prependSystemPrompt(userPrompt: string): string {
   if (!SYSTEM_PROMPT_TEXT) return userPrompt
   return `## SYSTEM INSTRUCTIONS\n\n${SYSTEM_PROMPT_TEXT}\n\n---\n\n## USER REQUEST\n\n${userPrompt}`
@@ -250,16 +257,18 @@ async function markPromptTerminal(
 }
 
 async function loadPromptsForTask(taskId: string): Promise<TaskContent['prompts']> {
+  const hasPromptModel = await supportsPromptModel()
   const rows = await db.all<{
     id: string
     prompt: string
     executor: string
+    model: string | null
     status: string
     submitted_at: Date
     completed_at: Date | null
     form_payload: AskDesignQuestionsPayload | null
   }>(
-    `SELECT id, prompt, executor, status, submitted_at, completed_at, form_payload
+    `SELECT id, prompt, executor, ${hasPromptModel ? 'model' : 'NULL::text AS model'}, status, submitted_at, completed_at, form_payload
        FROM prompts WHERE task_id = $1 ORDER BY submitted_at`,
     [taskId],
   )
@@ -276,6 +285,7 @@ async function loadPromptsForTask(taskId: string): Promise<TaskContent['prompts'
       id: r.id,
       userPrompt: r.prompt,
       executor: r.executor,
+      model: r.model,
       status: r.status,
       submittedAt: r.submitted_at.toISOString(),
       completedAt: r.completed_at?.toISOString() ?? null,
@@ -306,7 +316,9 @@ const POLL_INTERVAL_MS = 250
 
 export const localTaskRunner: TaskRunner = {
   async create({ userId: _userId, projectId, prompt, extras }) {
+    const hasPromptModel = await supportsPromptModel()
     const executor = typeof extras?.executor === 'string' ? extras.executor : 'claude'
+    const model = typeof extras?.model === 'string' ? extras.model : null
     const taskId = randomUUID()
     const promptId = randomUUID()
     const submittedAt = new Date().toISOString()
@@ -316,11 +328,19 @@ export const localTaskRunner: TaskRunner = {
        VALUES ($1, $2, $2, $3, 'running', NOW())`,
       [taskId, projectId, displayPrompt(prompt)],
     )
-    await db.run(
-      `INSERT INTO prompts (id, task_id, prompt, executor, status)
-       VALUES ($1, $2, $3, $4, 'running')`,
-      [promptId, taskId, prompt, executor],
-    )
+    if (hasPromptModel) {
+      await db.run(
+        `INSERT INTO prompts (id, task_id, prompt, executor, model, status)
+         VALUES ($1, $2, $3, $4, $5, 'running')`,
+        [promptId, taskId, prompt, executor, model],
+      )
+    } else {
+      await db.run(
+        `INSERT INTO prompts (id, task_id, prompt, executor, status)
+         VALUES ($1, $2, $3, $4, 'running')`,
+        [promptId, taskId, prompt, executor],
+      )
+    }
 
     void runInBackground(taskId, projectId, prompt, promptId, executor)
 
@@ -358,7 +378,9 @@ export const localTaskRunner: TaskRunner = {
   },
 
   async followup({ userId, taskId, prompt, extras }) {
+    const hasPromptModel = await supportsPromptModel()
     const executor = typeof extras?.executor === 'string' ? extras.executor : 'claude'
+    const model = typeof extras?.model === 'string' ? extras.model : null
     const row = await db.first<{ project_id: string }>(
       `SELECT t.project_id
          FROM tasks t
@@ -370,11 +392,19 @@ export const localTaskRunner: TaskRunner = {
 
     const promptId = randomUUID()
 
-    await db.run(
-      `INSERT INTO prompts (id, task_id, prompt, executor, status)
-       VALUES ($1, $2, $3, $4, 'running')`,
-      [promptId, taskId, prompt, executor],
-    )
+    if (hasPromptModel) {
+      await db.run(
+        `INSERT INTO prompts (id, task_id, prompt, executor, model, status)
+         VALUES ($1, $2, $3, $4, $5, 'running')`,
+        [promptId, taskId, prompt, executor, model],
+      )
+    } else {
+      await db.run(
+        `INSERT INTO prompts (id, task_id, prompt, executor, status)
+         VALUES ($1, $2, $3, $4, 'running')`,
+        [promptId, taskId, prompt, executor],
+      )
+    }
     await db.run(
       `UPDATE tasks SET status = 'running', completed_at = NULL WHERE id = $1`,
       [taskId],

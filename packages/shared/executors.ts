@@ -10,6 +10,14 @@
  */
 
 export type ExecutorType = 'claude' | 'gemini' | 'codex'
+export type ExecutorModelId =
+  | 'claude-sonnet-4.6'
+  | 'claude-opus-4.7'
+  | 'deepseek-v4-pro'
+  | 'gpt-5.4'
+  | 'gpt-5.4-mini'
+  | 'deepseek-v4-pro-codex'
+  | 'auto-gemini-3'
 
 /** The `value` is the executor id (matches the Rebyte API `executor` field
  *  AND the local CLI binary name — see LocalTaskRunner). The `label` is
@@ -26,13 +34,42 @@ export const EXECUTOR_LABELS: Record<ExecutorType, string> = {
   codex: 'Codex',
 }
 
+export interface ExecutorModelOption {
+  id: ExecutorModelId
+  label: string
+}
+
+export const MODELS_BY_EXECUTOR: Record<ExecutorType, readonly ExecutorModelOption[]> = {
+  claude: [
+    { id: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro' },
+    { id: 'claude-sonnet-4.6', label: 'Claude Sonnet 4.6' },
+    { id: 'claude-opus-4.7', label: 'Claude Opus 4.7' },
+  ],
+  codex: [
+    { id: 'gpt-5.4-mini', label: 'GPT-5.4 Mini' },
+    { id: 'gpt-5.4', label: 'GPT-5.4' },
+    { id: 'deepseek-v4-pro-codex', label: 'DeepSeek V4 Pro' },
+  ],
+  gemini: [
+    { id: 'auto-gemini-3', label: 'Auto Gemini 3' },
+  ],
+}
+
 /** Fixed model per executor — sent on Rebyte-backed requests so the hosted
  *  runner picks the right upstream. In local mode `model` is ignored; the
  *  executor name alone decides which CLI binary to spawn. */
-export const DEFAULT_MODEL_FOR: Record<ExecutorType, string> = {
+export const DEFAULT_MODEL_FOR: Record<ExecutorType, ExecutorModelId> = {
   claude: 'deepseek-v4-pro',
   codex: 'gpt-5.4-mini',
   gemini: 'auto-gemini-3',
+}
+
+export function isExecutorType(value: string): value is ExecutorType {
+  return value === 'claude' || value === 'gemini' || value === 'codex'
+}
+
+export function isModelForExecutor(executor: ExecutorType, model: string): model is ExecutorModelId {
+  return MODELS_BY_EXECUTOR[executor].some(option => option.id === model)
 }
 
 export const EXECUTOR_LOGO_PATHS: Record<ExecutorType, string> = {

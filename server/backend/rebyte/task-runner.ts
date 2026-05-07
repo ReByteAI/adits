@@ -75,33 +75,59 @@ interface RelayContent {
   }>
 }
 
+interface PromptMeta {
+  executor: string
+  model: string | null
+}
+
+let promptModelColumnPromise: Promise<boolean> | null = null
+
+function supportsPromptModel(): Promise<boolean> {
+  promptModelColumnPromise ??= db.columnExists('prompts', 'model')
+  return promptModelColumnPromise
+}
+
 function normalizeStatus(s: string): string {
   if (s === 'succeeded') return 'completed'
   return s
 }
 
-function mapRelayContent(rc: RelayContent): TaskContent {
+function mapRelayContent(rc: RelayContent, promptMeta: Map<string, PromptMeta>): TaskContent {
   return {
     id: rc.id,
     status: normalizeStatus(rc.status),
-    prompts: rc.prompts.map(p => ({
-      id: p.id,
-      userPrompt: p.userPrompt,
-      executor: 'claude',
-      status: normalizeStatus(p.status),
-      submittedAt: p.submittedAt,
-      completedAt: p.completedAt,
-      frames: (p.events ?? []).map((ev, i) => ({
-        seq: typeof ev.seq === 'number' ? ev.seq : i + 1,
-        data: ev,
-      })),
-      formPayload: null,
-    })),
+    prompts: rc.prompts.map(p => {
+      const meta = promptMeta.get(p.id)
+      return {
+        id: p.id,
+        userPrompt: p.userPrompt,
+        executor: meta?.executor ?? 'claude',
+        model: meta?.model ?? null,
+        status: normalizeStatus(p.status),
+        submittedAt: p.submittedAt,
+        completedAt: p.completedAt,
+        frames: (p.events ?? []).map((ev, i) => ({
+          seq: typeof ev.seq === 'number' ? ev.seq : i + 1,
+          data: ev,
+        })),
+        formPayload: null,
+      }
+    }),
   }
+}
+
+async function loadPromptMeta(taskId: string): Promise<Map<string, PromptMeta>> {
+  const hasPromptModel = await supportsPromptModel()
+  const rows = await db.all<{ id: string; executor: string; model: string | null }>(
+    `SELECT id, executor, ${hasPromptModel ? 'model' : 'NULL::text AS model'} FROM prompts WHERE task_id = $1`,
+    [taskId],
+  )
+  return new Map(rows.map(row => [row.id, { executor: row.executor, model: row.model }]))
 }
 
 export const rebyteTaskRunner: TaskRunner = {
   async create({ userId, projectId, prompt, extras }) {
+    const hasPromptModel = await supportsPromptModel()
     const ws = await resolveWorkspace(userId, projectId)
     if (!ws) throw new Error(`Project ${projectId} not found for user ${userId}`)
 
@@ -131,12 +157,22 @@ export const rebyteTaskRunner: TaskRunner = {
       const first = content.prompts[0]
       if (first) {
         const executor = typeof extras?.executor === 'string' ? extras.executor : 'claude'
-        await db.run(
-          `INSERT INTO prompts (id, task_id, prompt, executor, status, submitted_at)
-           VALUES ($1, $2, $3, $4, $5, NOW())
-           ON CONFLICT (id) DO NOTHING`,
-          [first.id, task.id, prompt, executor, first.status ?? 'running'],
-        )
+        const model = typeof extras?.model === 'string' ? extras.model : null
+        if (hasPromptModel) {
+          await db.run(
+            `INSERT INTO prompts (id, task_id, prompt, executor, model, status, submitted_at)
+             VALUES ($1, $2, $3, $4, $5, $6, NOW())
+             ON CONFLICT (id) DO NOTHING`,
+            [first.id, task.id, prompt, executor, model, first.status ?? 'running'],
+          )
+        } else {
+          await db.run(
+            `INSERT INTO prompts (id, task_id, prompt, executor, status, submitted_at)
+             VALUES ($1, $2, $3, $4, $5, NOW())
+             ON CONFLICT (id) DO NOTHING`,
+            [first.id, task.id, prompt, executor, first.status ?? 'running'],
+          )
+        }
       }
     } catch (err) {
       console.warn(`[rebyteTaskRunner.create] promptId lookup failed for ${task.id}:`, (err as Error).message)
@@ -159,6 +195,7 @@ export const rebyteTaskRunner: TaskRunner = {
   },
 
   async getContent(userId, taskId) {
+    const hasPromptModel = await supportsPromptModel()
     const owned = await resolveOwnedTask(userId, taskId)
     if (!owned) return null
     try {
@@ -166,20 +203,32 @@ export const rebyteTaskRunner: TaskRunner = {
         `/tasks/${taskId}/content?include=events`,
         { apiKey: owned.key },
       )
-      const content = mapRelayContent(rc)
+      const promptMeta = await loadPromptMeta(taskId)
+      const content = mapRelayContent(rc, promptMeta)
 
       // Mirror prompts onto adits' table so the per-prompt SSE has a row
       // to authorize against. Idempotent — repeated /content reads just
       // upsert. Don't store frames here; streaming reads fresh from relay.
       for (const p of content.prompts) {
-        await db.run(
-          `INSERT INTO prompts (id, task_id, prompt, executor, status, submitted_at, completed_at)
-           VALUES ($1, $2, $3, $4, $5, COALESCE($6::timestamptz, NOW()), $7::timestamptz)
-           ON CONFLICT (id) DO UPDATE
-             SET status = EXCLUDED.status,
-                 completed_at = EXCLUDED.completed_at`,
-          [p.id, taskId, p.userPrompt, p.executor, p.status, p.submittedAt, p.completedAt],
-        )
+        if (hasPromptModel) {
+          await db.run(
+            `INSERT INTO prompts (id, task_id, prompt, executor, model, status, submitted_at, completed_at)
+             VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7::timestamptz, NOW()), $8::timestamptz)
+             ON CONFLICT (id) DO UPDATE
+               SET status = EXCLUDED.status,
+                   completed_at = EXCLUDED.completed_at`,
+            [p.id, taskId, p.userPrompt, p.executor, p.model, p.status, p.submittedAt, p.completedAt],
+          )
+        } else {
+          await db.run(
+            `INSERT INTO prompts (id, task_id, prompt, executor, status, submitted_at, completed_at)
+             VALUES ($1, $2, $3, $4, $5, COALESCE($6::timestamptz, NOW()), $7::timestamptz)
+             ON CONFLICT (id) DO UPDATE
+               SET status = EXCLUDED.status,
+                   completed_at = EXCLUDED.completed_at`,
+            [p.id, taskId, p.userPrompt, p.executor, p.status, p.submittedAt, p.completedAt],
+          )
+        }
       }
       return content
     } catch (err) {
@@ -189,6 +238,7 @@ export const rebyteTaskRunner: TaskRunner = {
   },
 
   async followup({ userId, taskId, prompt, extras }) {
+    const hasPromptModel = await supportsPromptModel()
     const owned = await resolveOwnedTask(userId, taskId)
     if (!owned) return null
     try {
@@ -199,12 +249,22 @@ export const rebyteTaskRunner: TaskRunner = {
       })
 
       const executor = typeof extras?.executor === 'string' ? extras.executor : 'claude'
-      await db.run(
-        `INSERT INTO prompts (id, task_id, prompt, executor, status, submitted_at)
-         VALUES ($1, $2, $3, $4, 'running', NOW())
-         ON CONFLICT (id) DO NOTHING`,
-        [result.promptId, taskId, prompt, executor],
-      )
+      const model = typeof extras?.model === 'string' ? extras.model : null
+      if (hasPromptModel) {
+        await db.run(
+          `INSERT INTO prompts (id, task_id, prompt, executor, model, status, submitted_at)
+           VALUES ($1, $2, $3, $4, $5, 'running', NOW())
+           ON CONFLICT (id) DO NOTHING`,
+          [result.promptId, taskId, prompt, executor, model],
+        )
+      } else {
+        await db.run(
+          `INSERT INTO prompts (id, task_id, prompt, executor, status, submitted_at)
+           VALUES ($1, $2, $3, $4, 'running', NOW())
+           ON CONFLICT (id) DO NOTHING`,
+          [result.promptId, taskId, prompt, executor],
+        )
+      }
       await db.run(
         `UPDATE tasks SET status = 'running', completed_at = NULL WHERE id = $1`,
         [taskId],

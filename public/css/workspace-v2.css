@@ -634,6 +634,10 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
 }
 .wsv2-executor-picker-btn:hover:not(:disabled) { color: var(--wsv2-ink); border-color: var(--wsv2-ink-3); }
 .wsv2-executor-picker-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.wsv2-model-picker-prefix {
+  color: var(--wsv2-ink-3);
+  font-weight: 400;
+}
 .wsv2-executor-picker-label { font-weight: 500; }
 .wsv2-executor-picker-menu {
   position: absolute;

@@ -40,6 +40,7 @@ export interface TaskContent {
     id: string
     userPrompt: string
     executor: string
+    model: string | null
     status: string
     submittedAt: string
     completedAt: string | null
