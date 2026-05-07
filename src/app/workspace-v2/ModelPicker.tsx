@@ -43,9 +43,8 @@ export function ModelPicker({
         disabled={menuDisabled}
         aria-haspopup="listbox"
         aria-expanded={open}
-        title={t('executor.label')}
+        title={current.label}
       >
-        <span className="wsv2-model-picker-prefix">{t('executor.label')}</span>
         <span className="wsv2-executor-picker-label">{current.label}</span>
         <svg width="8" height="8" viewBox="0 0 12 12" aria-hidden="true">
           <path d="M3 5l3 3 3-3" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />

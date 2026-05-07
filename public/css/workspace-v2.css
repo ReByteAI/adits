@@ -554,7 +554,9 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 6px;
+  min-width: 0;
   padding: 0 4px 6px;
 }
 .wsv2-composer-skills-btn {
@@ -617,12 +619,18 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   cursor: pointer;
 }
 .wsv2-composer-skill-chip-remove:hover { background: rgba(15, 12, 8, 0.08); color: var(--wsv2-ink); }
-.wsv2-executor-picker { position: relative; }
+.wsv2-executor-picker {
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+}
 .wsv2-executor-picker-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   height: 24px;
+  max-width: 100%;
+  min-width: 0;
   padding: 0 8px;
   border-radius: 999px;
   border: 1px solid rgba(15, 12, 8, 0.12);
@@ -631,14 +639,17 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   font: 500 11px/1 inherit;
   letter-spacing: 0.01em;
   cursor: pointer;
+  white-space: nowrap;
 }
 .wsv2-executor-picker-btn:hover:not(:disabled) { color: var(--wsv2-ink); border-color: var(--wsv2-ink-3); }
 .wsv2-executor-picker-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.wsv2-model-picker-prefix {
-  color: var(--wsv2-ink-3);
-  font-weight: 400;
+.wsv2-executor-picker-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
 }
-.wsv2-executor-picker-label { font-weight: 500; }
 .wsv2-executor-picker-menu {
   position: absolute;
   bottom: 100%;
