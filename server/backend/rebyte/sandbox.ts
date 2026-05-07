@@ -6,20 +6,17 @@
  *   - `rebyteJSON(env, …)` → `rebyteJSON(…)` (env is module-level now).
  *   - `Context<{ Bindings: Env; … }>` → `Context<{ Variables: { userId } }>`.
  *
- * Everything else — the connect retry loop, envd readiness poll, etc. —
- * is verbatim because it's pure SDK behavior.
+ * Hosted mode treats sandboxes as Lambda-style endpoints. We do not keep
+ * long-lived connections, poll readiness, or maintain an in-process pool.
+ * Each filesystem operation connects fresh and lets the platform resume on
+ * demand.
  */
 
-import { ErrorCode, Sandbox, SandboxError, TimeoutError } from 'rebyte-sandbox'
+import { Sandbox } from 'rebyte-sandbox'
 import { db } from '../../db.js'
 import { rebyteJSON } from './rebyte.js'
 import { requireUserRebyteKey } from './rebyte-auth.js'
 import { ensureProjectFileServerInstalled } from './file-server-install.js'
-import { withProjectSandbox } from './sandbox-pool.js'
-
-const SANDBOX_TIMEOUT_MS = 5 * 60 * 1000
-const SANDBOX_CONNECT_BUDGET_MS = 120_000
-const SANDBOX_POLL_INTERVAL_MS = 200
 
 export interface AgentComputerCreateResponse {
   id: string
@@ -75,23 +72,6 @@ async function getSandboxApiKey(
   return { apiKey: fresh.apiKey, baseUrl: fresh.baseUrl }
 }
 
-export async function waitForEnvdReady(sbx: Sandbox, timeoutMs = 8000): Promise<void> {
-  const deadline = Date.now() + timeoutMs
-  while (Date.now() < deadline) {
-    try {
-      if (await sbx.isRunning()) return
-    } catch {
-      // transient errors during resume are expected; keep polling
-    }
-    await new Promise(r => setTimeout(r, 200))
-  }
-  // Throw TimeoutError (SDK type) rather than a bare Error so the
-  // sandbox-pool classifier (`isSandboxNotReady`) recognizes the
-  // failure and invalidates the cache. A raw Error here would leave
-  // callers with a stale inflight result.
-  throw new TimeoutError(`envd readiness timed out after ${timeoutMs}ms`)
-}
-
 export async function connectProjectSandbox(
   userId: string,
   projectId: string,
@@ -99,45 +79,14 @@ export async function connectProjectSandbox(
   const sandboxId = await loadProjectSandboxId(userId, projectId)
   const { apiKey, baseUrl } = await getSandboxApiKey(userId)
   const domain = new URL(baseUrl).hostname
-  const deadline = Date.now() + SANDBOX_CONNECT_BUDGET_MS
-  let sbx: Sandbox
-  let pauseWaitAttempts = 0
-  while (true) {
-    const remainingMs = deadline - Date.now()
-    if (remainingMs <= 0) {
-      throw new Error(`Sandbox ${sandboxId} stayed in the pausing state for longer than ${SANDBOX_CONNECT_BUDGET_MS}ms`)
-    }
-    try {
-      sbx = await Sandbox.connect(sandboxId, {
-        apiUrl: baseUrl,
-        apiKey,
-        domain,
-        requestTimeoutMs: remainingMs,
-      })
-      if (pauseWaitAttempts > 0) {
-        console.log(`[sandbox] ${sandboxId} resumed after ${pauseWaitAttempts * SANDBOX_POLL_INTERVAL_MS}ms of pause-waiting`)
-      }
-      break
-    } catch (err) {
-      if (!(err instanceof SandboxError) || err.errorCode !== ErrorCode.SANDBOX_PAUSING) {
-        console.warn(`[sandbox] ${sandboxId} connect threw non-pause error:`, (err as Error).name, (err as Error).message)
-        throw err
-      }
-      pauseWaitAttempts++
-      await new Promise(r => setTimeout(r, Math.min(SANDBOX_POLL_INTERVAL_MS, remainingMs)))
-    }
-  }
-  await sbx.setTimeout(SANDBOX_TIMEOUT_MS).catch((err: Error) => {
-    console.warn(`[sandbox] setTimeout failed for project ${projectId}:`, err.message)
+  const sbx = await Sandbox.connect(sandboxId, {
+    apiUrl: baseUrl,
+    apiKey,
+    domain,
   })
-  await waitForEnvdReady(sbx)
-  // One-time install per project (DB-gated — 99%+ of calls stop at a
-  // ~1 ms lookup). Failure throws, which surfaces to whichever caller
-  // first hit the sandbox (file read/write/list). The stamp column stays
-  // NULL so the next call re-runs the slow path. Not wrapped in
-  // `.catch()` because letting connectProjectSandbox silently succeed
-  // while the file-server failed to install would let the next read
-  // hand the browser a :8080 URL that ECONNREFUSES.
+  // One-time file-server bootstrap stays DB-gated, but no longer rides on a
+  // pooled "prepared sandbox" assumption. Each hosted request can connect
+  // fresh; the install check is an ordinary idempotent side task.
   await ensureProjectFileServerInstalled(userId, projectId, sbx)
   return sbx
 }
@@ -148,15 +97,14 @@ export async function writeProjectFile(
   path: string,
   bytes: Uint8Array,
 ): Promise<void> {
-  await withProjectSandbox(userId, projectId, async sbx => {
-    const lastSlash = path.lastIndexOf('/')
-    if (lastSlash > 0) {
-      await sbx.files.makeDir(path.slice(0, lastSlash))
-    }
-    // @eng0/sdk's files.write takes ArrayBuffer; peel the Uint8Array view.
-    const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
-    await sbx.files.write(path, ab)
-  })
+  const sbx = await connectProjectSandbox(userId, projectId)
+  const lastSlash = path.lastIndexOf('/')
+  if (lastSlash > 0) {
+    await sbx.files.makeDir(path.slice(0, lastSlash))
+  }
+  // @eng0/sdk's files.write takes ArrayBuffer; peel the Uint8Array view.
+  const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+  await sbx.files.write(path, ab)
 }
 
 export async function readProjectFile(
@@ -164,7 +112,8 @@ export async function readProjectFile(
   projectId: string,
   path: string,
 ): Promise<Uint8Array> {
-  return withProjectSandbox(userId, projectId, sbx => sbx.files.read(path, { format: 'bytes' }))
+  const sbx = await connectProjectSandbox(userId, projectId)
+  return sbx.files.read(path, { format: 'bytes' })
 }
 
 export async function removeProjectFile(
@@ -172,7 +121,8 @@ export async function removeProjectFile(
   projectId: string,
   path: string,
 ): Promise<void> {
-  await withProjectSandbox(userId, projectId, sbx => sbx.files.remove(path))
+  const sbx = await connectProjectSandbox(userId, projectId)
+  await sbx.files.remove(path)
 }
 
 export interface SandboxFileEntry {
@@ -188,16 +138,15 @@ export async function listProjectFiles(
   root: string,
   depth = 5,
 ): Promise<SandboxFileEntry[]> {
-  return withProjectSandbox(userId, projectId, async sbx => {
-    await sbx.files.makeDir(root)
-    const entries = await sbx.files.list(root, { depth })
-    return entries
-      .filter(e => e.type === 'file')
-      .map(e => ({
-        path: e.path,
-        name: e.name,
-        size: e.size,
-        mtime: e.modifiedTime ? e.modifiedTime.toISOString() : null,
-      }))
-  })
+  const sbx = await connectProjectSandbox(userId, projectId)
+  await sbx.files.makeDir(root)
+  const entries = await sbx.files.list(root, { depth })
+  return entries
+    .filter(e => e.type === 'file')
+    .map(e => ({
+      path: e.path,
+      name: e.name,
+      size: e.size,
+      mtime: e.modifiedTime ? e.modifiedTime.toISOString() : null,
+    }))
 }
