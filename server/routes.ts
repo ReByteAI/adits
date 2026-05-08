@@ -69,7 +69,7 @@ app.onError((err, c) => {
   if (err instanceof SyntaxError) {
     return c.json({ error: 'Invalid JSON body' }, 400)
   }
-  console.error('[api]', err.message)
+  console.error('[api]', err)
   return c.json({ error: 'Internal server error' }, 500)
 })
 
