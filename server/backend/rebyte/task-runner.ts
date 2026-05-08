@@ -275,11 +275,15 @@ export const rebyteTaskRunner: TaskRunner = {
         `/tasks/${taskId}/content?include=events`,
         { apiKey: owned.key },
       )
+      const existingPromptMeta = await loadPromptMeta(taskId)
 
       // Mirror prompts onto adits' table so the per-prompt SSE has a row
       // to authorize against. Idempotent — repeated /content reads just
       // upsert. Don't store frames here; streaming reads fresh from relay.
       for (const p of rc.prompts) {
+        const meta = existingPromptMeta.get(p.id)
+        const executor = meta?.executor ?? 'claude'
+        const model = meta?.model ?? null
         if (hasPromptModel) {
           await db.run(
             `INSERT INTO prompts (id, task_id, prompt, executor, model, status, submitted_at, completed_at)
@@ -287,7 +291,7 @@ export const rebyteTaskRunner: TaskRunner = {
              ON CONFLICT (id) DO UPDATE
                SET status = EXCLUDED.status,
                    completed_at = EXCLUDED.completed_at`,
-            [p.id, taskId, p.userPrompt, p.executor, p.model, p.status, p.submittedAt, p.completedAt],
+            [p.id, taskId, p.userPrompt, executor, model, p.status, p.submittedAt, p.completedAt],
           )
         } else {
           await db.run(
@@ -296,7 +300,7 @@ export const rebyteTaskRunner: TaskRunner = {
              ON CONFLICT (id) DO UPDATE
                SET status = EXCLUDED.status,
                    completed_at = EXCLUDED.completed_at`,
-            [p.id, taskId, p.userPrompt, p.executor, p.status, p.submittedAt, p.completedAt],
+            [p.id, taskId, p.userPrompt, executor, p.status, p.submittedAt, p.completedAt],
           )
         }
       }
