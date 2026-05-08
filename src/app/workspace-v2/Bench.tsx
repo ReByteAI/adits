@@ -562,16 +562,17 @@ export default function Bench({ mobileView = 'preview' }: { mobileView?: 'files'
 
       <div className="wsv2-bench-body">
         {activeTabId === DESIGN_FILES_TAB || mobileView === 'files' ? (
-          <>
-            <DesignFilesTab files={files} onOpen={openFileTab} />
-            {activeTabId === DESIGN_FILES_TAB && (
+          <DesignFilesTab
+            files={files}
+            onOpen={openFileTab}
+            dropzone={activeTabId === DESIGN_FILES_TAB ? (
               <BenchDropzone
                 active={isDragOver}
                 fileInputRef={fileInputRef}
                 onFileInputChange={onFileInputChange}
               />
-            )}
-          </>
+            ) : null}
+          />
         ) : activeFile && isNapkin(activeFile) ? (
           <NapkinEditor key={activeFile.id} file={activeFile} />
         ) : activeFile && isPage(activeFile) ? (
@@ -880,10 +881,11 @@ function collectFolders(files: FileData[]): Array<{ name: string; children: File
 }
 
 function DesignFilesTab({
-  files, onOpen,
+  files, onOpen, dropzone,
 }: {
   files: FileData[]
   onOpen: (file: FileData) => void
+  dropzone?: React.ReactNode
 }) {
   const { t } = useTranslation('workspace')
   const folders = useMemo(() => collectFolders(files), [files])
@@ -930,7 +932,12 @@ function DesignFilesTab({
   const selected = files.find(f => f.id === selectedId) ?? null
 
   if (!files.length) {
-    return <div className="wsv2-editor-placeholder">{t('bench.empty')}</div>
+    return (
+      <>
+        <div className="wsv2-editor-placeholder">{t('bench.empty')}</div>
+        {dropzone}
+      </>
+    )
   }
 
   const toggleFolder = (name: string) => {
@@ -966,68 +973,71 @@ function DesignFilesTab({
   }
 
   return (
-    <div className="wsv2-filebrowser">
-      <div className="wsv2-filebrowser-list">
-        {folders.length > 0 && (
-          <div>
-            <div className="wsv2-fb-section">{t('bench.section.folders')}</div>
-            {folders.map(folder => {
-              const open = expandedFolders.has(folder.name)
-              return (
-                <div key={folder.name}>
-                  <div className={`wsv2-fb-row wsv2-fb-row--folder${open ? ' is-expanded' : ''}`}>
-                    <button
-                      type="button"
-                      className="wsv2-fb-chevron"
-                      aria-label={open ? t('bench.collapseFolder') : t('bench.expandFolder')}
-                      aria-expanded={open}
-                      onClick={() => toggleFolder(folder.name)}
-                    >
-                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                        <path d="m3.5 2 3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                    <FileRowIcon variant="folder" />
-                    <div className="wsv2-fb-text">
-                      <div className="wsv2-fb-name">{folder.name}</div>
-                      <div className="wsv2-fb-meta">{t('bench.folder')}</div>
+    <>
+      <div className="wsv2-filebrowser">
+        <div className="wsv2-filebrowser-list">
+          {folders.length > 0 && (
+            <div>
+              <div className="wsv2-fb-section">{t('bench.section.folders')}</div>
+              {folders.map(folder => {
+                const open = expandedFolders.has(folder.name)
+                return (
+                  <div key={folder.name}>
+                    <div className={`wsv2-fb-row wsv2-fb-row--folder${open ? ' is-expanded' : ''}`}>
+                      <button
+                        type="button"
+                        className="wsv2-fb-chevron"
+                        aria-label={open ? t('bench.collapseFolder') : t('bench.expandFolder')}
+                        aria-expanded={open}
+                        onClick={() => toggleFolder(folder.name)}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="m3.5 2 3 3-3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                      <FileRowIcon variant="folder" />
+                      <div className="wsv2-fb-text">
+                        <div className="wsv2-fb-name">{folder.name}</div>
+                        <div className="wsv2-fb-meta">{t('bench.folder')}</div>
+                      </div>
+                      <button
+                        type="button"
+                        className="wsv2-fb-trailing"
+                        aria-label={t('bench.collapseFolder')}
+                        onClick={() => toggleFolder(folder.name)}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                          <path d="M3 6h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                        </svg>
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="wsv2-fb-trailing"
-                      aria-label={t('bench.collapseFolder')}
-                      onClick={() => toggleFolder(folder.name)}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                        <path d="M3 6h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                      </svg>
-                    </button>
+                    {open && folder.children.map(child => renderRow(child, rowSection(child), 1))}
                   </div>
-                  {open && folder.children.map(child => renderRow(child, rowSection(child), 1))}
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          )}
+          {sections.map(([section, items]) => (
+            <div key={section}>
+              <div className="wsv2-fb-section">{t(`bench.section.${section}` as 'bench.section.files')}</div>
+              {items.map(f => renderRow(f, rowSection(f)))}
+            </div>
+          ))}
+        </div>
+        <DetailPanel selected={selected} onOpen={onOpen} />
+        {pendingDelete && (
+          <ConfirmDialog
+            title={t('bench.deleteTitle')}
+            message={t('bench.deleteMessage', { name: pendingDelete.name })}
+            confirmLabel={t('bench.delete')}
+            confirmDanger
+            onConfirm={handleConfirmDelete}
+            onCancel={() => setPendingDelete(null)}
+          />
         )}
-        {sections.map(([section, items]) => (
-          <div key={section}>
-            <div className="wsv2-fb-section">{t(`bench.section.${section}` as 'bench.section.files')}</div>
-            {items.map(f => renderRow(f, rowSection(f)))}
-          </div>
-        ))}
       </div>
-      <DetailPanel selected={selected} onOpen={onOpen} />
-      {pendingDelete && (
-        <ConfirmDialog
-          title={t('bench.deleteTitle')}
-          message={t('bench.deleteMessage', { name: pendingDelete.name })}
-          confirmLabel={t('bench.delete')}
-          confirmDanger
-          onConfirm={handleConfirmDelete}
-          onCancel={() => setPendingDelete(null)}
-        />
-      )}
-    </div>
+      {dropzone}
+    </>
   )
 }
 
