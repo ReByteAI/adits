@@ -22,21 +22,63 @@ const pool = new Pool({
   max: 10,
 })
 
+const RETRYABLE_DB_CODES = new Set([
+  'ECONNREFUSED',
+  'ECONNRESET',
+  'ETIMEDOUT',
+  'EHOSTUNREACH',
+  'ENETUNREACH',
+])
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function isRetryableDbConnectError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false
+  const code = 'code' in err ? (err as { code?: unknown }).code : undefined
+  if (typeof code === 'string' && RETRYABLE_DB_CODES.has(code)) return true
+  if (err instanceof AggregateError) {
+    return err.errors.length > 0 && err.errors.every(child => isRetryableDbConnectError(child))
+  }
+  const nested = 'errors' in err ? (err as { errors?: unknown }).errors : undefined
+  if (Array.isArray(nested)) {
+    return nested.length > 0 && nested.every(child => isRetryableDbConnectError(child))
+  }
+  return false
+}
+
+async function queryWithRetry<T extends QueryResultRow = QueryResultRow>(
+  sql: string,
+  params: unknown[] = [],
+): Promise<ReturnType<Pool['query<T>']> extends Promise<infer R> ? R : never> {
+  let attempt = 0
+  for (;;) {
+    try {
+      return await pool.query<T>(sql, params as unknown[])
+    } catch (err) {
+      if (!isRetryableDbConnectError(err) || attempt >= 2) throw err
+      attempt += 1
+      await sleep(150 * attempt)
+    }
+  }
+}
+
 /** Single-row query. Returns null if zero rows, the first row otherwise. */
 async function first<T extends QueryResultRow = QueryResultRow>(sql: string, params: unknown[] = []): Promise<T | null> {
-  const r = await pool.query<T>(sql, params as unknown[])
+  const r = await queryWithRetry<T>(sql, params)
   return r.rows[0] ?? null
 }
 
 /** Multi-row query. Always returns an array. */
 async function all<T extends QueryResultRow = QueryResultRow>(sql: string, params: unknown[] = []): Promise<T[]> {
-  const r = await pool.query<T>(sql, params as unknown[])
+  const r = await queryWithRetry<T>(sql, params)
   return r.rows
 }
 
 /** Mutation. Returns the rowCount (number of rows affected). */
 async function run(sql: string, params: unknown[] = []): Promise<{ changes: number }> {
-  const r = await pool.query(sql, params as unknown[])
+  const r = await queryWithRetry(sql, params)
   return { changes: r.rowCount ?? 0 }
 }
 
