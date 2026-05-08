@@ -22,6 +22,7 @@ export default function ProjectList() {
   const [activeTemplateKey, setActiveTemplateKey] = useState<string>(PROJECT_TEMPLATES[0]?.key ?? 'blank')
   const [name, setName] = useState('')
   const [designSystemId, setDesignSystemId] = useState<string | null>(null)
+  const designSystemIdRef = useRef<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [search, setSearch] = useState('')
 
@@ -40,7 +41,7 @@ export default function ProjectList() {
     setCreating(true)
     try {
       const id = await addProject(name.trim() || undefined, {
-        designSystemId,
+        designSystemId: designSystemIdRef.current,
         buildingSkillId: activeTemplate.buildingSkillId,
       })
       selectProject(id)
@@ -55,6 +56,11 @@ export default function ProjectList() {
     const q = search.trim().toLowerCase()
     return q ? list.filter(p => p.name.toLowerCase().includes(q)) : list
   }, [projects, search])
+
+  const updateDesignSystemId = (id: string | null) => {
+    designSystemIdRef.current = id
+    setDesignSystemId(id)
+  }
 
   return (
     <div className="wsv2-home">
@@ -121,7 +127,7 @@ export default function ProjectList() {
                 </label>
                 <DesignSystemPicker
                   value={designSystemId}
-                  onChange={setDesignSystemId}
+                  onChange={updateDesignSystemId}
                   disabled={creating}
                 />
               </div>
