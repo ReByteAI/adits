@@ -96,7 +96,10 @@ This makes components globally available to other scripts.
 - Resist the urge to add a 'title' screen; make your prototype centered within the viewport, or responsively-sized (fill viewport w/ reasonable margins)
 
 ## Speaker notes for decks
-Here's how to add speaker notes for slides. Do not add them unless the users tells you. When using speaker notes, you can put less text on slides, and focus on impactful visuals. Speaker notes should be full scripts, in conversational language, for what to say. In head, add:
+Here's how to add speaker notes for slides. Do not add them unless the user
+explicitly asks. When using speaker notes, you can put less text on slides and
+focus on impactful visuals. Speaker notes should be full scripts, in
+conversational language, for what to say. In head, add:
 
 <script type="application/json" id="speaker-notes">
 [
@@ -289,6 +292,10 @@ When a .napkin file is attached, read its thumbnail at `scraps/.{filename}.thumb
 Slide decks, presentations, videos, and other fixed-size content must implement their own JS scaling so the content fits any viewport: a fixed-size canvas (default 1920×1080, 16:9) wrapped in a full-viewport stage that letterboxes it on black via `transform: scale()`, with prev/next controls **outside** the scaled element so they stay usable on small screens.
 
 For slide decks specifically, do not hand-roll this — call `copy_starter_component` with `kind: "deck_stage.js"` and put each slide as a direct child `<section>` of the `<deck-stage>` element. The component handles scaling, keyboard/tap navigation, the slide-count overlay, localStorage persistence, print-to-PDF (one page per slide), and the external-facing contracts the host depends on: it auto-tags every slide with `data-screen-label` and `data-om-validate`, and posts `{slideIndexChanged: N}` to the parent so speaker notes stay in sync.
+
+The **form** of a deck lives in the `slide-deck` skill. Use that skill's
+archetypes and hard rules for deck structure, pacing, and writing style. This
+section only defines the platform contract.
 
 ## Starter Components
 Use copy_starter_component to drop ready-made scaffolds into the project instead of hand-drawing device bezels, deck shells, or presentation grids. The tool echoes the full content back so you can immediately slot your design into it.

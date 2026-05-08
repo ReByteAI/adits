@@ -1,94 +1,224 @@
 # Slide deck
 
-Produce a presentation as a single HTML document.
+Produce a **presentation deck**, not a web page.
 
-**Always use `copy_starter_component({kind: "deck_stage.js"})` as the shell**, per system.md § Fixed-size content. The component handles scaling, keyboard/tap navigation, the slide-count overlay, `{slideIndexChanged}` postMessage, localStorage persistence, and print-to-PDF. Each slide goes as a direct child `<section>` of the `<deck-stage>` element.
+This skill is the single source of truth for decks in Adits. If a user asks
+for slides, a deck, a presentation, a keynote, a report-out, a board update,
+or a pitch, this is the shape to follow.
 
-## Variant & shape
+## Hard contract
 
-Variants: pitch / report-out / technical walkthrough / keynote / training / status update. Default: report-out.
+- **Always** call `copy_starter_component({kind: "deck_stage.js"})`.
+- The final artifact **must** be a single HTML document.
+- The shell **must** be `<deck-stage>`, with each slide as a direct child
+  `<section>`.
+- Slides **must** be labeled `data-screen-label="NN Title"` with 1-indexed
+  numbering (`01`, `02`, ...).
+- Default aspect ratio is **16:9**. Use 4:3 only if the user explicitly asks.
+- **Do not** add speaker notes unless the user explicitly asks for them.
 
-Aspect ratio: 16:9 default, 4:3 on request. Length buckets: short (≤ 10), medium (11–20), long (> 20). Long decks need section dividers and may use a design-system Deck Recipe if the contract names one.
+Why this is non-negotiable:
+- `deck_stage.js` owns scaling, keyboard/tap nav, slide index, localStorage
+  persistence, and print-to-PDF.
+- The host depends on its `{slideIndexChanged: N}` postMessage and on the
+  `data-screen-label` annotations for present mode, comments, and export.
 
-## Structure
+If you hand-roll the shell, the deck is broken even if it looks good.
 
-### Slide inventory
+## What a deck is
 
-| Slide type | Purpose | How many |
-|---|---|---|
-| **Cover** | Title, subtitle, presenter, date | 1 |
-| Section divider (long decks) | Section name, large type, accent | 1 per section |
-| **Content slides** | One idea per slide. Strong anchor: number, quote, chart, image, or short bullet list (≤ 5) | most |
-| Transition | One short phrase that sets up the next section | optional, rare |
-| **Closing** | Summary, ask, or contact. Mirrors cover. | 1 |
-| Appendix | Backup data — reached via jump-nav, not main sequence | optional |
+A deck is a sequence of **high-signal frames** for live presentation.
 
-### Per-slide zones
+It is **not**:
+- a landing page chopped into sections
+- a document with page breaks
+- a stack of uniform cards
+- a bullet dump
+- a mini website with scrolling
 
-- **Header** — slide title or section eyebrow. Short.
-- **Body** — one idea. One visual anchor max.
-- **Footer (optional)** — page number, brand mark, section label. Subtle.
+Every slide should feel like a deliberate screen in a talk track. The viewer
+should understand the arc even when flipping quickly.
 
-Keep zones consistent across the deck so the eye doesn't re-learn the layout.
+## Default deck behavior
 
-## Writing rules
+- One idea per slide.
+- One visual anchor per slide.
+- Titles are short, declarative, and specific.
+- Body copy is sparse: anchors, not paragraphs.
+- Keep rhythm: alternate dense and airy slides; do not make every slide use
+  the same composition.
+- Use accent sparingly. Cover, section divider, closer, and the occasional
+  stat callout are enough.
 
-- **One idea per slide.** If a slide has a paragraph, it's two slides.
-- **Words are anchors, not narration.** ≤ 30 words per content slide; ≤ 10 on headline-style slides.
-- **Numbers are the strongest anchor.** One large number + one-line context beats three bullets.
-- **Every slide earns its place.** Cut slides that paraphrase their neighbors.
-- **Accent discipline.** Cover + section dividers + closing + occasional stat callout. Not on every slide header.
-- **Quote attribution on the same slide** as the quote.
-- **Consistent tense and voice.** Past for things that happened, present for things that are. Pick and hold.
-- **Distinctive over clichéd.** Cut "our journey," "unleashing," "best-in-class," "transform."
-- **Label each slide with `data-screen-label="NN Title"`** (1-indexed) per system.md § Labelling slides.
+## Word budget
 
-## Source & material
+- Cover: title + subtitle only.
+- Headline/stat slides: **≤ 10 words**
+- Standard content slides: **≤ 30 words**
+- Bullet lists: **≤ 5 bullets**, and each bullet must be short.
 
-- **Every named entity, metric, quote, or attribution** from user-supplied material.
-- **No fabricated percentages, dollar figures, dates, versions, or quote sources.**
-- **Required items present**: title + presenter (cover), brand logo (branded decks), metrics (pitch/report-out/case study), quote attributions, screenshots (product/technical). If missing, produce a gap table and ask once.
+If a slide wants a paragraph, split it into two slides.
 
-## Distill raw input
+## Slide archetypes
 
-Slides start with **story**, not layout.
+Use these as building blocks. A good deck uses 3–5 of them, not the same one
+repeated over and over.
 
-1. Extract thesis, evidence, metrics, quotes, action items, visual assets.
-2. **Sketch the arc** in one line each:
-   - Pitch: Problem → Market → Solution → Traction → Ask
-   - Report-out: Goals → What shipped → Metrics → Learnings → Next
-3. Estimate slide count (~1–3 slides per arc beat).
-4. Gap-check which beats have no supporting fact or visual.
-5. Ask once with a gap table.
+### 1. Cover
+- Title
+- subtitle / framing line
+- presenter / brand / date if relevant
 
-## Form-specific verification
+### 2. Section divider
+- One phrase
+- strong shift in scale or background
+- only for longer decks
 
-Beyond `done` + `fork_verifier_agent`:
+### 3. Stat / number slide
+- one large number
+- one line of context
+- optional tiny source or qualifier
 
-- **Keyboard nav works** — arrows, space, Home, End — current slide index updates (deck_stage handles it; confirm not broken).
-- **No slide overflows the viewport** at chosen aspect on 1440×900.
-- **Word budget honored** — no content slide exceeds ~30 words.
-- **Accent discipline** — ≤ 4 slide roles use accent.
-- **Every slide earns its place** — skim for paraphrase-of-neighbor.
-- **Facts** — every number, name, date, quote, attribution matches source material.
-- **Print path** renders cleanly as sequential pages with no nav chrome (`@media print`).
+### 4. Image-led slide
+- one image / screenshot / diagram as the anchor
+- minimal caption
 
-Speaker notes only if the user asked (system.md § Speaker notes).
+### 5. Comparison / two-up slide
+- before vs after
+- option A vs option B
+- problem vs solution
+
+### 6. Short bullet slide
+- only when compression matters
+- never more than 5 bullets
+- each bullet must earn its place
+
+### 7. Quote / testimonial slide
+- quote
+- attribution on the same slide
+
+### 8. Closing slide
+- summary, CTA, ask, or contact
+- should feel like a real ending, not “thanks” filler
+
+## Archetype recipes
+
+Start from one of these unless the user gave a different structure.
+
+### Pitch
+Default length: 7–10 slides.
+
+Arc:
+1. Cover
+2. Problem
+3. Why now / context
+4. Solution
+5. Product / workflow
+6. Traction / proof
+7. Business / rollout / plan
+8. Ask / closer
+
+### Product intro
+Default length: 5–8 slides.
+
+Arc:
+1. Cover
+2. What it is
+3. Why it matters
+4. Core workflow
+5. Signature feature
+6. Proof / detail
+7. CTA / closer
+
+### Report-out
+Default length: 6–10 slides.
+
+Arc:
+1. Cover
+2. Goals
+3. What shipped
+4. Metrics / outcomes
+5. Learnings
+6. Risks / open questions
+7. Next steps
+8. Closer
+
+### Keynote
+Default length: 10–20 slides.
+
+Arc:
+1. Cover
+2. Hook
+3. Problem framing
+4. Big idea
+5+. Alternating evidence / scenes / examples
+N. Closing statement
+
+Use more image-led and headline slides here; less operational detail.
+
+## Layout rules
+
+- Keep a stable slide canvas and stable margins.
+- Vary composition, not chrome. The deck should feel coherent without every
+  slide looking templated.
+- Footer chrome should be subtle.
+- Reuse a small set of spatial zones so slides feel related.
+- If the project has a design contract, obey it strictly. The contract decides
+  colors, type, and tone; this skill decides deck form.
+
+## Hard don'ts
+
+- Do **not** make every slide a centered card on a colored background.
+- Do **not** make every slide use the same hero/title/body/footer pattern.
+- Do **not** turn the deck into a scrolly page.
+- Do **not** put dense paragraphs on slides.
+- Do **not** add decorative UI chrome that competes with the content.
+- Do **not** use generic startup clichés like “our journey”, “best-in-class”,
+  or “transforming the future”.
+- Do **not** fabricate metrics, quotes, dates, or logos.
+
+## Source discipline
+
+- Every named entity, metric, quote, and attribution must come from user
+  material or be clearly presented as placeholder copy.
+- If critical material is missing, ask once with a compact gap list.
+- If the user gave enough for a plausible placeholder demo, you may proceed
+  with tasteful placeholder language rather than stalling.
+
+## Build order
+
+1. Read `.impeccable.md` and any linked deck assets/templates.
+2. Decide the archetype recipe.
+3. Sketch the slide arc in plain language.
+4. Copy `deck_stage.js`.
+5. Build the deck as `<deck-stage> > <section>`.
+6. Check labels, flow, and word counts.
+
+## Verification
+
+Before declaring done:
+
+- Keyboard nav works: arrows, space, Home, End.
+- Current slide index changes correctly.
+- No slide overflows at the chosen aspect ratio.
+- Word budget is respected.
+- Accent is restrained.
+- Print path is clean.
+- The deck feels like a presentation, not a webpage.
 
 ## Feedback protocol
 
-| User says | Ask |
-|---|---|
-| "too many slides" | Deck is N slides, arc is [A → B → C]. Cut [section X], or merge slides [Y and Z]? |
-| "slide too busy" | Slide N has k elements, w words. Drop [element], split, or tighten copy? |
-| "boring" | Which axis — pacing (too uniform), typography (no hierarchy), or story (unclear arc)? Pick one. |
-| "doesn't flow" | Arc goes [X → Y → Z]. Add a transition between [X] and [Y], or resequence? |
-| "colors feel loud" | Accent is on [list]. Restrict to [shorter list]? |
+When a user says:
 
-Never say *"I'll tighten the deck"* without naming the slide and the change.
+- “too many slides” → name the current arc and propose cuts/merges.
+- “too busy” → name the slide and what gets removed.
+- “boring” → identify whether the problem is pacing, hierarchy, or story.
+- “doesn’t flow” → name the broken transition between slides/sections.
+
+Never answer with vague promises like “I’ll tighten it.”
 
 ## When not to use
 
-- Static handout / read-aloud → `one-pager` or long-document.
-- Interactive navigation with state → `prototype`.
-- Single marketing poster → `one-pager` landscape.
+- Static handout / read-aloud document → `one-pager`
+- Stateful product demo → `prototype`
+- Poster / single marketing composition → `one-pager`
