@@ -70,6 +70,7 @@
     "delete": "Delete",
     "download": "Download",
     "open": "Open",
+    "preview": "Preview",
     "modifiedMeta": "Modified {{date}} · {{size}} · {{ext}}",
     "backToProjectAria": "Back to project gallery",
     "backToProject": "Back to project"

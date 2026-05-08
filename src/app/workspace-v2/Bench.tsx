@@ -49,7 +49,7 @@ function toBenchFile(file: FileData): BenchFile {
   }
 }
 
-export default function Bench() {
+export default function Bench({ mobileView = 'preview' }: { mobileView?: 'files' | 'preview' }) {
   const { t } = useTranslation('workspace')
   const project = useActiveProject()
   const projectId = useActiveProjectId()
@@ -440,6 +440,7 @@ export default function Bench() {
     <section
       className={`wsv2-bench${isDragOver ? ' is-dragging' : ''}`}
       data-presenting={presentMode !== 'off' ? presentMode : undefined}
+      data-mobile-pane={mobileView}
       onDrop={onDrop}
       onDragOver={e => e.preventDefault()}
       onDragEnter={e => { if (e.dataTransfer.types.includes('Files')) setDragDepth(d => d + 1) }}
@@ -560,7 +561,7 @@ export default function Bench() {
       </div>
 
       <div className="wsv2-bench-body">
-        {activeTabId === DESIGN_FILES_TAB ? (
+        {activeTabId === DESIGN_FILES_TAB || mobileView === 'files' ? (
           <DesignFilesTab files={files} onOpen={openFileTab} />
         ) : activeFile && isNapkin(activeFile) ? (
           <NapkinEditor key={activeFile.id} file={activeFile} />

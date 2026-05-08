@@ -6,33 +6,43 @@ import ProjectGate from '../components/ProjectGate'
 import { useActiveProjectId } from '../store.ts'
 
 export default function WorkspaceV2() {
-  const { t } = useTranslation('chat')
+  const { t: tc } = useTranslation('chat')
+  const { t: tw } = useTranslation('workspace')
   const id = useActiveProjectId()
-  const [mobilePane, setMobilePane] = useState<'bench' | 'chat'>('bench')
+  const [mobilePane, setMobilePane] = useState<'files' | 'preview' | 'chat'>('files')
 
   return (
     <div className="wsv2">
       <div className={`wsv2-pane-slot wsv2-pane-slot--chat${mobilePane === 'chat' ? ' is-active' : ''}`}>
         <ChatPanel />
       </div>
-      <div className={`wsv2-pane-slot wsv2-pane-slot--bench${mobilePane === 'bench' ? ' is-active' : ''}`}>
+      <div className={`wsv2-pane-slot wsv2-pane-slot--bench${mobilePane !== 'chat' ? ' is-active' : ''}`}>
         {id ? (
           <ProjectGate key={id} projectId={id}>
-            <Bench />
+            <Bench mobileView={mobilePane === 'chat' ? 'preview' : mobilePane} />
           </ProjectGate>
         ) : (
-          <Bench />
+          <Bench mobileView={mobilePane === 'chat' ? 'preview' : mobilePane} />
         )}
       </div>
-      <div className="wsv2-mobile-switcher" role="tablist" aria-label={t('header.projectOverview')}>
+      <div className="wsv2-mobile-switcher" role="tablist" aria-label={tc('header.projectOverview')}>
         <button
           type="button"
           role="tab"
-          aria-selected={mobilePane === 'bench'}
-          className={`wsv2-mobile-switcher-btn${mobilePane === 'bench' ? ' is-active' : ''}`}
-          onClick={() => setMobilePane('bench')}
+          aria-selected={mobilePane === 'files'}
+          className={`wsv2-mobile-switcher-btn${mobilePane === 'files' ? ' is-active' : ''}`}
+          onClick={() => setMobilePane('files')}
         >
-          {t('header.projectOverview')}
+          {tw('bench.designFiles')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mobilePane === 'preview'}
+          className={`wsv2-mobile-switcher-btn${mobilePane === 'preview' ? ' is-active' : ''}`}
+          onClick={() => setMobilePane('preview')}
+        >
+          {tw('bench.preview')}
         </button>
         <button
           type="button"
@@ -41,7 +51,7 @@ export default function WorkspaceV2() {
           className={`wsv2-mobile-switcher-btn${mobilePane === 'chat' ? ' is-active' : ''}`}
           onClick={() => setMobilePane('chat')}
         >
-          {t('header.tabChat')}
+          {tc('header.tabChat')}
         </button>
       </div>
     </div>

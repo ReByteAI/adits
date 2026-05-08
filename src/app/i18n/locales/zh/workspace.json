@@ -70,6 +70,7 @@
     "delete": "删除",
     "download": "下载",
     "open": "打开",
+    "preview": "预览",
     "modifiedMeta": "修改于 {{date}} · {{size}} · {{ext}}",
     "backToProjectAria": "返回项目列表",
     "backToProject": "返回项目"
