@@ -290,14 +290,6 @@ function ProjectCard({
   const { t: tc } = useTranslation('common')
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(project.name)
-  const coverMonogram = project.name
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map(part => part[0]?.toUpperCase() ?? '')
-    .join('') || project.name.slice(0, 1).toUpperCase() || 'P'
-
   const meta = project.updatedAt ? t('updatedAt', { date: project.updatedAt }) : ''
 
   const commit = async () => {
@@ -319,7 +311,13 @@ function ProjectCard({
       onKeyDown={(e) => { if (e.key === 'Enter' && !editing) onOpen() }}>
       <div className="wsv2-card-project-thumb" aria-hidden="true">
         <div className="wsv2-card-project-thumb-grid" />
-        <div className="wsv2-card-project-thumb-monogram">{coverMonogram}</div>
+        <div className="wsv2-card-project-thumb-orb wsv2-card-project-thumb-orb-a" />
+        <div className="wsv2-card-project-thumb-orb wsv2-card-project-thumb-orb-b" />
+        <div className="wsv2-card-project-thumb-panel">
+          <div className="wsv2-card-project-thumb-line wsv2-card-project-thumb-line-strong" />
+          <div className="wsv2-card-project-thumb-line" />
+          <div className="wsv2-card-project-thumb-line wsv2-card-project-thumb-line-short" />
+        </div>
       </div>
       <div className="wsv2-card-project-body">
         {editing ? (

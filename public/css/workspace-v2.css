@@ -2137,14 +2137,11 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at top left, rgba(27, 54, 93, 0.14), transparent 48%),
-    linear-gradient(135deg, rgba(27, 54, 93, 0.08), rgba(27, 54, 93, 0.02)),
+    radial-gradient(circle at top left, rgba(27, 54, 93, 0.12), transparent 44%),
+    radial-gradient(circle at bottom right, rgba(179, 123, 70, 0.12), transparent 42%),
+    linear-gradient(135deg, rgba(27, 54, 93, 0.07), rgba(27, 54, 93, 0.015)),
     linear-gradient(180deg, #f7f6f2, #f0ede5);
   border: 1px solid var(--wsv2-hairline);
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-start;
-  padding: 16px;
 }
 
 .wsv2-card-project-thumb-grid {
@@ -2157,13 +2154,58 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 78%);
 }
 
-.wsv2-card-project-thumb-monogram {
-  position: relative;
-  z-index: 1;
-  font: 600 30px/1 var(--wsv2-sans, inherit);
-  letter-spacing: -0.04em;
-  color: rgba(27, 54, 93, 0.78);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+.wsv2-card-project-thumb-orb {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(0.2px);
+}
+
+.wsv2-card-project-thumb-orb-a {
+  width: 84px;
+  height: 84px;
+  top: 18px;
+  right: 24px;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.82), rgba(126, 157, 198, 0.48) 42%, rgba(27, 54, 93, 0.14) 72%, transparent 76%);
+}
+
+.wsv2-card-project-thumb-orb-b {
+  width: 56px;
+  height: 56px;
+  left: 28px;
+  bottom: 26px;
+  background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.7), rgba(221, 183, 142, 0.44) 44%, rgba(179, 123, 70, 0.12) 74%, transparent 78%);
+}
+
+.wsv2-card-project-thumb-panel {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  height: 50px;
+  border-radius: 12px;
+  border: 1px solid rgba(27, 54, 93, 0.08);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 22px rgba(20, 20, 19, 0.06);
+  padding: 12px 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wsv2-card-project-thumb-line {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(27, 54, 93, 0.14);
+}
+
+.wsv2-card-project-thumb-line-strong {
+  width: 58%;
+  background: rgba(27, 54, 93, 0.28);
+}
+
+.wsv2-card-project-thumb-line-short {
+  width: 36%;
 }
 
 .wsv2-card-project-body {
