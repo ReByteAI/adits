@@ -8,6 +8,7 @@ const ARTIFACT_BASE_URL = 'https://raw.githubusercontent.com/ReByteAI/adits/main
 const PROJECT_ROOT = '/code'
 const SANDBOX_SKILLS_ROOT = '/home/user/.skills'
 const SANDBOX_SYSTEM_PROMPT_PATH = '/home/user/system_prompt.md'
+const CORE_HOSTED_SKILLS = ['ask-design-questions'] as const
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const SYSTEM_PROMPT_PATH = join(__dirname, '..', '..', '..', 'system.md')
@@ -105,6 +106,15 @@ export async function installHostedSkills(opts: {
   for (const raw of opts.skills) {
     const slug = hostedSkillSlug(raw)
     if (!slug) continue
+    await installHostedSkill({ userId: opts.userId, projectId: opts.projectId, slug })
+  }
+}
+
+export async function installHostedCoreSkills(opts: {
+  userId: string
+  projectId: string
+}): Promise<void> {
+  for (const slug of CORE_HOSTED_SKILLS) {
     await installHostedSkill({ userId: opts.userId, projectId: opts.projectId, slug })
   }
 }

@@ -33,7 +33,7 @@ import { db } from './db.js'
 import { env } from './env.js'
 import { rebyteJSON } from './backend/rebyte/rebyte.js'
 import { requireUserRebyteKey } from './backend/rebyte/rebyte-auth.js'
-import { installHostedSkills, syncHostedSystemPrompt } from './backend/rebyte/artifacts.js'
+import { installHostedCoreSkills, installHostedSkills, syncHostedSystemPrompt } from './backend/rebyte/artifacts.js'
 import { isTransientSandboxLifecycleError } from './backend/rebyte/sandbox.js'
 import { fileServer, fileStore, taskRunner } from './backend/index.js'
 import { classifyPath, detectType, type FileRole } from '../packages/shared/file-types/index.js'
@@ -754,6 +754,7 @@ app.post('/projects/:pid/tasks', requireAuth, async (c) => {
 
   if (env.ADITS_BACKEND === 'rebyte') {
     await syncHostedSystemPrompt({ userId, projectId: pid })
+    await installHostedCoreSkills({ userId, projectId: pid })
   }
 
   if (env.ADITS_BACKEND === 'rebyte' && body.skills?.length) {
@@ -806,6 +807,7 @@ app.post('/tasks/:tid/prompts', requireAuth, async (c) => {
     if (!row) return c.json({ error: 'Task not found' }, 404)
     projectId = row.project_id
     await syncHostedSystemPrompt({ userId, projectId })
+    await installHostedCoreSkills({ userId, projectId })
   }
 
   if (env.ADITS_BACKEND === 'rebyte' && body.skills?.length) {

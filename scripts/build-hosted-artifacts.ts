@@ -11,7 +11,9 @@ const REPO_ROOT = resolve(__dirname, '..')
 const DESIGN_SYSTEMS_DIR = resolve(REPO_ROOT, 'server', 'backend', 'local', 'design-systems')
 const BUILDING_SKILLS_DIR = resolve(REPO_ROOT, 'server', 'backend', 'local', 'building-skills')
 const REBYTE_SKILLS_DIR = resolve(REPO_ROOT, '..', 'rebyte-skills')
+const LOCAL_SKILLS_DIR = resolve(REPO_ROOT, 'skills')
 const OUT_ROOT = resolve(REPO_ROOT, 'hosted-artifacts')
+const CORE_HOSTED_SKILLS = ['ask-design-questions'] as const
 
 async function addDirToZip(
   zip: JSZip,
@@ -95,11 +97,26 @@ async function buildSkills(): Promise<void> {
   }
 }
 
+async function buildCoreSkills(): Promise<void> {
+  for (const id of CORE_HOSTED_SKILLS) {
+    const srcDir = join(LOCAL_SKILLS_DIR, id)
+    const srcStat = await stat(srcDir).catch(() => null)
+    if (!srcStat?.isDirectory()) {
+      throw new Error(`Missing core hosted skill source: ${srcDir}`)
+    }
+
+    const zip = new JSZip()
+    await addDirToZip(zip, srcDir, id)
+    await writeZip(zip, join(OUT_ROOT, 'skills', `${id}.zip`))
+  }
+}
+
 async function main(): Promise<void> {
   await rm(OUT_ROOT, { recursive: true, force: true })
   await buildDesignSystems()
   await buildBuildingSkills()
   await buildSkills()
+  await buildCoreSkills()
   console.log(`Built hosted artifacts into ${OUT_ROOT}`)
 }
 
