@@ -562,7 +562,16 @@ export default function Bench({ mobileView = 'preview' }: { mobileView?: 'files'
 
       <div className="wsv2-bench-body">
         {activeTabId === DESIGN_FILES_TAB || mobileView === 'files' ? (
-          <DesignFilesTab files={files} onOpen={openFileTab} />
+          <>
+            <DesignFilesTab files={files} onOpen={openFileTab} />
+            {activeTabId === DESIGN_FILES_TAB && (
+              <BenchDropzone
+                active={isDragOver}
+                fileInputRef={fileInputRef}
+                onFileInputChange={onFileInputChange}
+              />
+            )}
+          </>
         ) : activeFile && isNapkin(activeFile) ? (
           <NapkinEditor key={activeFile.id} file={activeFile} />
         ) : activeFile && isPage(activeFile) ? (
@@ -620,29 +629,6 @@ export default function Bench({ mobileView = 'preview' }: { mobileView?: 'files'
         )}
       </div>
 
-      <div className={`wsv2-dropzone${isDragOver ? ' is-active' : ''}`}>
-        <button
-          type="button"
-          className="wsv2-dropzone-icon"
-          aria-label={t('bench.dropFilesTitle')}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M10 13V3m0 0L6 7m4-4 4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M3.5 13v2.5A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-          </svg>
-        </button>
-        <div className="wsv2-dropzone-title">{t('bench.dropFilesTitle')}</div>
-        <div className="wsv2-dropzone-sub">{t('bench.dropFilesSub')}</div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          hidden
-          multiple
-          onChange={onFileInputChange}
-        />
-      </div>
-
       {isDragOver && (
         <div className="wsv2-confirm-pill" role="status" aria-live="polite">
           <button
@@ -670,6 +656,42 @@ export default function Bench({ mobileView = 'preview' }: { mobileView?: 'files'
         </div>
       )}
     </section>
+  )
+}
+
+function BenchDropzone({
+  active,
+  fileInputRef,
+  onFileInputChange,
+}: {
+  active: boolean
+  fileInputRef: React.RefObject<HTMLInputElement | null>
+  onFileInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+}) {
+  const { t } = useTranslation('workspace')
+  return (
+    <div className={`wsv2-dropzone${active ? ' is-active' : ''}`}>
+      <button
+        type="button"
+        className="wsv2-dropzone-icon"
+        aria-label={t('bench.dropFilesTitle')}
+        onClick={() => fileInputRef.current?.click()}
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+          <path d="M10 13V3m0 0L6 7m4-4 4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M3.5 13v2.5A1.5 1.5 0 0 0 5 17h10a1.5 1.5 0 0 0 1.5-1.5V13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      </button>
+      <div className="wsv2-dropzone-title">{t('bench.dropFilesTitle')}</div>
+      <div className="wsv2-dropzone-sub">{t('bench.dropFilesSub')}</div>
+      <input
+        ref={fileInputRef}
+        type="file"
+        hidden
+        multiple
+        onChange={onFileInputChange}
+      />
+    </div>
   )
 }
 
