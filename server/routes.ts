@@ -33,7 +33,7 @@ import { db } from './db.js'
 import { env } from './env.js'
 import { rebyteJSON } from './backend/rebyte/rebyte.js'
 import { requireUserRebyteKey } from './backend/rebyte/rebyte-auth.js'
-import { installHostedSkills } from './backend/rebyte/artifacts.js'
+import { installHostedSkills, syncHostedSystemPrompt } from './backend/rebyte/artifacts.js'
 import { isTransientSandboxLifecycleError } from './backend/rebyte/sandbox.js'
 import { fileServer, fileStore, taskRunner } from './backend/index.js'
 import { classifyPath, detectType, type FileRole } from '../packages/shared/file-types/index.js'
@@ -752,6 +752,10 @@ app.post('/projects/:pid/tasks', requireAuth, async (c) => {
   )
   if (!owned) return c.json({ error: 'Project not found' }, 404)
 
+  if (env.ADITS_BACKEND === 'rebyte') {
+    await syncHostedSystemPrompt({ userId, projectId: pid })
+  }
+
   if (env.ADITS_BACKEND === 'rebyte' && body.skills?.length) {
     await installHostedSkills({ userId, projectId: pid, skills: body.skills })
   }
@@ -790,7 +794,8 @@ app.post('/tasks/:tid/prompts', requireAuth, async (c) => {
     return c.json({ error: 'prompt is required' }, 400)
   }
 
-  if (env.ADITS_BACKEND === 'rebyte' && body.skills?.length) {
+  let projectId: string | null = null
+  if (env.ADITS_BACKEND === 'rebyte') {
     const row = await db.first<{ project_id: string }>(
       `SELECT t.project_id
          FROM tasks t
@@ -799,7 +804,12 @@ app.post('/tasks/:tid/prompts', requireAuth, async (c) => {
       [userId, tid],
     )
     if (!row) return c.json({ error: 'Task not found' }, 404)
-    await installHostedSkills({ userId, projectId: row.project_id, skills: body.skills })
+    projectId = row.project_id
+    await syncHostedSystemPrompt({ userId, projectId })
+  }
+
+  if (env.ADITS_BACKEND === 'rebyte' && body.skills?.length) {
+    await installHostedSkills({ userId, projectId: projectId!, skills: body.skills })
   }
 
   // Extras shape mirrors `POST /projects/:pid/tasks` — rebyte forwards

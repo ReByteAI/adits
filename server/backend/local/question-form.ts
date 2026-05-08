@@ -47,19 +47,7 @@ export async function consumeQuestionsFile(
     }
     return null
   }
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(raw)
-  } catch (err) {
-    console.warn('[question-form] invalid JSON in', path, ':', (err as Error).message)
-    return null
-  }
-  const reason = validate(parsed)
-  if (reason) {
-    console.warn('[question-form] schema violation in', path, ':', reason)
-    return null
-  }
-  return parsed as AskDesignQuestionsPayload
+  return parseQuestionsPayload(raw, path)
 }
 
 export async function deleteQuestionsFile(projectId: string): Promise<void> {
@@ -98,6 +86,25 @@ function validate(value: unknown): string | null {
     if (reason) return `question[${i}]: ${reason}`
   }
   return null
+}
+
+export function parseQuestionsPayload(
+  raw: string,
+  source = '.adits/questions.json',
+): AskDesignQuestionsPayload | null {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch (err) {
+    console.warn('[question-form] invalid JSON in', source, ':', (err as Error).message)
+    return null
+  }
+  const reason = validate(parsed)
+  if (reason) {
+    console.warn('[question-form] schema violation in', source, ':', reason)
+    return null
+  }
+  return parsed as AskDesignQuestionsPayload
 }
 
 function validateQuestion(q: unknown, seenIds: Set<string>): string | null {

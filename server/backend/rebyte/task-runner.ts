@@ -13,8 +13,11 @@
 
 import { db } from '../../db.js'
 import { env } from '../../env.js'
+import { readProjectFile, removeProjectFile } from './sandbox.js'
 import { rebyteFetch, RebyteError, rebyteJSON } from './rebyte.js'
 import { requireUserRebyteKey } from './rebyte-auth.js'
+import { parseQuestionsPayload } from '../local/question-form.js'
+import type { AskDesignQuestionsPayload } from '../../../packages/shared/ask-design-questions.js'
 import type { CreateTaskResult, StreamItem, TaskContent, TaskRunner } from '../task-runner.js'
 
 async function resolveWorkspace(userId: string, projectId: string): Promise<{ wid: string; key: string } | null> {
@@ -78,6 +81,7 @@ interface RelayContent {
 interface PromptMeta {
   executor: string
   model: string | null
+  formPayload: AskDesignQuestionsPayload | null
 }
 
 let promptModelColumnPromise: Promise<boolean> | null = null
@@ -110,7 +114,7 @@ function mapRelayContent(rc: RelayContent, promptMeta: Map<string, PromptMeta>):
           seq: typeof ev.seq === 'number' ? ev.seq : i + 1,
           data: ev,
         })),
-        formPayload: null,
+        formPayload: meta?.formPayload ?? null,
       }
     }),
   }
@@ -118,11 +122,22 @@ function mapRelayContent(rc: RelayContent, promptMeta: Map<string, PromptMeta>):
 
 async function loadPromptMeta(taskId: string): Promise<Map<string, PromptMeta>> {
   const hasPromptModel = await supportsPromptModel()
-  const rows = await db.all<{ id: string; executor: string; model: string | null }>(
-    `SELECT id, executor, ${hasPromptModel ? 'model' : 'NULL::text AS model'} FROM prompts WHERE task_id = $1`,
+  const rows = await db.all<{
+    id: string
+    executor: string
+    model: string | null
+    form_payload: AskDesignQuestionsPayload | null
+  }>(
+    `SELECT id, executor, ${hasPromptModel ? 'model' : 'NULL::text AS model'}, form_payload
+       FROM prompts
+      WHERE task_id = $1`,
     [taskId],
   )
-  return new Map(rows.map(row => [row.id, { executor: row.executor, model: row.model }]))
+  return new Map(rows.map(row => [row.id, {
+    executor: row.executor,
+    model: row.model,
+    formPayload: row.form_payload ?? null,
+  }]))
 }
 
 async function loadLatestTaskBinding(taskId: string): Promise<PromptMeta | null> {
@@ -135,6 +150,51 @@ async function loadLatestTaskBinding(taskId: string): Promise<PromptMeta | null>
       LIMIT 1`,
     [taskId],
   )
+}
+
+const QUESTIONS_FILE_PATH = '/code/.adits/questions.json'
+
+function isTerminalPromptStatus(status: string): boolean {
+  return status !== 'running' && status !== 'pending'
+}
+
+async function maybeCaptureHostedFormPayload(
+  userId: string,
+  projectId: string,
+  taskId: string,
+  rc: RelayContent,
+): Promise<void> {
+  const latest = rc.prompts.at(-1)
+  if (!latest) return
+  if (!isTerminalPromptStatus(normalizeStatus(latest.status))) return
+
+  const existing = await db.first<{ form_payload: AskDesignQuestionsPayload | null }>(
+    `SELECT form_payload FROM prompts WHERE id = $1 AND task_id = $2`,
+    [latest.id, taskId],
+  )
+  if (existing?.form_payload) return
+
+  let bytes: Uint8Array
+  try {
+    bytes = await readProjectFile(userId, projectId, QUESTIONS_FILE_PATH)
+  } catch (err) {
+    if (err instanceof Error && /not found|missing|404/i.test(err.message)) return
+    throw err
+  }
+
+  const payload = parseQuestionsPayload(
+    new TextDecoder().decode(bytes),
+    QUESTIONS_FILE_PATH,
+  )
+  if (!payload) return
+
+  await db.run(
+    `UPDATE prompts
+        SET form_payload = $1::jsonb
+      WHERE id = $2 AND task_id = $3`,
+    [JSON.stringify(payload), latest.id, taskId],
+  )
+  await removeProjectFile(userId, projectId, QUESTIONS_FILE_PATH).catch(() => {})
 }
 
 export const rebyteTaskRunner: TaskRunner = {
@@ -215,13 +275,11 @@ export const rebyteTaskRunner: TaskRunner = {
         `/tasks/${taskId}/content?include=events`,
         { apiKey: owned.key },
       )
-      const promptMeta = await loadPromptMeta(taskId)
-      const content = mapRelayContent(rc, promptMeta)
 
       // Mirror prompts onto adits' table so the per-prompt SSE has a row
       // to authorize against. Idempotent — repeated /content reads just
       // upsert. Don't store frames here; streaming reads fresh from relay.
-      for (const p of content.prompts) {
+      for (const p of rc.prompts) {
         if (hasPromptModel) {
           await db.run(
             `INSERT INTO prompts (id, task_id, prompt, executor, model, status, submitted_at, completed_at)
@@ -242,6 +300,9 @@ export const rebyteTaskRunner: TaskRunner = {
           )
         }
       }
+      await maybeCaptureHostedFormPayload(userId, owned.projectId, taskId, rc)
+      const promptMeta = await loadPromptMeta(taskId)
+      const content = mapRelayContent(rc, promptMeta)
       return content
     } catch (err) {
       if (err instanceof RebyteError && err.status === 404) return null

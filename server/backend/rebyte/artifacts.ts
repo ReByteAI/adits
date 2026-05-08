@@ -1,9 +1,16 @@
 import type { Sandbox } from 'rebyte-sandbox'
+import { readFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { connectProjectSandbox } from './sandbox.js'
 
 const ARTIFACT_BASE_URL = 'https://raw.githubusercontent.com/ReByteAI/adits/main/hosted-artifacts'
 const PROJECT_ROOT = '/code'
 const SANDBOX_SKILLS_ROOT = '/home/user/.skills'
+const SANDBOX_SYSTEM_PROMPT_PATH = '/home/user/system_prompt.md'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const SYSTEM_PROMPT_PATH = join(__dirname, '..', '..', '..', 'system.md')
 
 function pyString(value: string): string {
   return JSON.stringify(value)
@@ -100,4 +107,15 @@ export async function installHostedSkills(opts: {
     if (!slug) continue
     await installHostedSkill({ userId: opts.userId, projectId: opts.projectId, slug })
   }
+}
+
+export async function syncHostedSystemPrompt(opts: {
+  userId: string
+  projectId: string
+}): Promise<void> {
+  const sbx = await connectProjectSandbox(opts.userId, opts.projectId)
+  const prompt = await readFile(SYSTEM_PROMPT_PATH, 'utf8')
+  const bytes = new TextEncoder().encode(prompt)
+  const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer
+  await sbx.files.write(SANDBOX_SYSTEM_PROMPT_PATH, ab)
 }
