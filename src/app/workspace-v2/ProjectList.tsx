@@ -290,6 +290,13 @@ function ProjectCard({
   const { t: tc } = useTranslation('common')
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(project.name)
+  const coverMonogram = project.name
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase() ?? '')
+    .join('') || project.name.slice(0, 1).toUpperCase() || 'P'
 
   const meta = project.updatedAt ? t('updatedAt', { date: project.updatedAt }) : ''
 
@@ -310,7 +317,10 @@ function ProjectCard({
   return (
     <div className="wsv2-card-project" onClick={onOpen} role="button" tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' && !editing) onOpen() }}>
-      <div className="wsv2-card-project-thumb" aria-hidden="true" />
+      <div className="wsv2-card-project-thumb" aria-hidden="true">
+        <div className="wsv2-card-project-thumb-grid" />
+        <div className="wsv2-card-project-thumb-monogram">{coverMonogram}</div>
+      </div>
       <div className="wsv2-card-project-body">
         {editing ? (
           <input

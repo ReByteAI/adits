@@ -2134,10 +2134,36 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   aspect-ratio: 16 / 9;
   width: 100%;
   border-radius: 8px;
+  position: relative;
+  overflow: hidden;
   background:
-    linear-gradient(135deg, rgba(27, 54, 93, 0.06), rgba(27, 54, 93, 0.02)),
-    var(--wsv2-cool);
+    radial-gradient(circle at top left, rgba(27, 54, 93, 0.14), transparent 48%),
+    linear-gradient(135deg, rgba(27, 54, 93, 0.08), rgba(27, 54, 93, 0.02)),
+    linear-gradient(180deg, #f7f6f2, #f0ede5);
   border: 1px solid var(--wsv2-hairline);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 16px;
+}
+
+.wsv2-card-project-thumb-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(27, 54, 93, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 54, 93, 0.05) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55), transparent 78%);
+}
+
+.wsv2-card-project-thumb-monogram {
+  position: relative;
+  z-index: 1;
+  font: 600 30px/1 var(--wsv2-sans, inherit);
+  letter-spacing: -0.04em;
+  color: rgba(27, 54, 93, 0.78);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .wsv2-card-project-body {
