@@ -33,6 +33,7 @@ import { db } from './db.js'
 import { env } from './env.js'
 import { rebyteJSON } from './backend/rebyte/rebyte.js'
 import { requireUserRebyteKey } from './backend/rebyte/rebyte-auth.js'
+import { installHostedSkills } from './backend/rebyte/artifacts.js'
 import { isTransientSandboxLifecycleError } from './backend/rebyte/sandbox.js'
 import { fileServer, fileStore, taskRunner } from './backend/index.js'
 import { classifyPath, detectType, type FileRole } from '../packages/shared/file-types/index.js'
@@ -751,13 +752,17 @@ app.post('/projects/:pid/tasks', requireAuth, async (c) => {
   )
   if (!owned) return c.json({ error: 'Project not found' }, 404)
 
+  if (env.ADITS_BACKEND === 'rebyte' && body.skills?.length) {
+    await installHostedSkills({ userId, projectId: pid, skills: body.skills })
+  }
+
   // Extras: everything Rebyte accepts beyond `prompt`. Default skills are
   // applied here (not in the runner) so local doesn't see them.
   const extras: Record<string, unknown> = {
     ...(body.executor !== undefined && { executor: body.executor }),
     ...(body.model !== undefined && { model: body.model }),
     ...(body.files !== undefined && { files: body.files }),
-    skills: withDefaultSkills(body.skills),
+    ...(env.ADITS_BACKEND === 'rebyte' ? {} : { skills: withDefaultSkills(body.skills) }),
   }
 
   const result = await taskRunner.create({ userId, projectId: pid, prompt: body.prompt, extras })
@@ -785,12 +790,24 @@ app.post('/tasks/:tid/prompts', requireAuth, async (c) => {
     return c.json({ error: 'prompt is required' }, 400)
   }
 
+  if (env.ADITS_BACKEND === 'rebyte' && body.skills?.length) {
+    const row = await db.first<{ project_id: string }>(
+      `SELECT t.project_id
+         FROM tasks t
+         JOIN projects p ON p.id = t.project_id AND p.user_id = $1
+        WHERE t.id = $2`,
+      [userId, tid],
+    )
+    if (!row) return c.json({ error: 'Task not found' }, 404)
+    await installHostedSkills({ userId, projectId: row.project_id, skills: body.skills })
+  }
+
   // Extras shape mirrors `POST /projects/:pid/tasks` — rebyte forwards
   // the whole bag; local reads `executor` and ignores the rest.
   const extras: Record<string, unknown> = {
     ...(body.executor !== undefined && { executor: body.executor }),
     ...(body.model !== undefined && { model: body.model }),
-    skills: withDefaultSkills(body.skills),
+    ...(env.ADITS_BACKEND === 'rebyte' ? {} : { skills: withDefaultSkills(body.skills) }),
   }
 
   const result = await taskRunner.followup({ userId, taskId: tid, prompt: body.prompt, extras })

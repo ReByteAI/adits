@@ -315,9 +315,9 @@ export default function ChatPanel() {
     setSending(true)
     try {
       const baseOpts = {
-        // Picker stores bare slugs (`make-a-deck`); relay reads
-        // `github:owner/repo#slug` and runs `npx skills add` on the VM,
-        // bypassing the DB lookup path used for featured/private skills.
+        // Picker stores bare slugs (`make-a-deck`). Hosted mode installs
+        // those skills into the sandbox before the task starts; local mode
+        // ignores this field for now.
         skills: pickedSkills.length
           ? pickedSkills.map(s => `github:rebyteai/rebyte-skills#${s}`)
           : undefined,

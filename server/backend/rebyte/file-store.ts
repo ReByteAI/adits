@@ -11,6 +11,7 @@ import { env } from '../../env.js'
 import { rebyteFetch, rebyteJSON } from './rebyte.js'
 import { requireUserRebyteKey } from './rebyte-auth.js'
 import type { FileStore, ProjectRow } from '../file-store.js'
+import { installHostedBuildingSkill, installHostedDesignSystem } from './artifacts.js'
 
 interface ProjectDbRow {
   id: string
@@ -129,17 +130,17 @@ export const rebyteFileStore: FileStore = {
     throw new HTTPException(501, { message: 'Duplicate is only available in local mode' })
   },
 
-  /** Rebyte applyDesignSystem: no-op for now. Preset content delivery into
-   *  the VM isn't wired yet; the route still succeeds so project creation
-   *  doesn't fail. The agent can be told about the design system through
-   *  other channels (chat prompt) in the meantime. */
-  async applyDesignSystem({ id }) {
-    console.warn(`[rebyteFileStore.applyDesignSystem] skipped — not yet wired (id="${id}")`)
+  /** Hosted applyDesignSystem: materialize the preset into the sandbox.
+   *  `.impeccable.md` lands at `/code/.impeccable.md`; any assets land at
+   *  `/code/.skills/design-systems/<id>/`. */
+  async applyDesignSystem({ userId, projectId, id }) {
+    await installHostedDesignSystem({ userId, projectId, id })
   },
 
-  /** Rebyte applyBuildingSkill: no-op for now. Same reason as
-   *  applyDesignSystem — the scaffold-into-VM delivery path isn't built. */
-  async applyBuildingSkill({ id }) {
-    console.warn(`[rebyteFileStore.applyBuildingSkill] skipped — not yet wired (id="${id}")`)
+  /** Hosted applyBuildingSkill: install the mapped skill into the sandbox's
+   *  global `/home/user/.skills/<slug>/` directory so the coding agent sees
+   *  it on subsequent turns. */
+  async applyBuildingSkill({ userId, projectId, id }) {
+    await installHostedBuildingSkill({ userId, projectId, id })
   },
 }
