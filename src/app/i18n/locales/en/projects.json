@@ -5,6 +5,8 @@
   "namePlaceholder": "Project name",
   "designSystem": "Design system",
   "designSystemNone": "None",
+  "designSystemNoneDescription": "Start without a preset visual language.",
+  "designSystemSelected": "Selected design system",
   "creating": "Creating…",
   "createButton": "+ Create",
   "privacy": "Only you can see your project by default.",

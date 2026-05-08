@@ -5,6 +5,8 @@
   "namePlaceholder": "项目名称",
   "designSystem": "设计系统",
   "designSystemNone": "无",
+  "designSystemNoneDescription": "不预设视觉风格，直接开始。",
+  "designSystemSelected": "当前设计系统",
   "creating": "创建中…",
   "createButton": "+ 创建",
   "privacy": "默认只有你可以看到此项目。",

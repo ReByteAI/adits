@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAccountActions, useCurrentUser } from '../auth-shim.tsx'
 import { useProjects, useProjectsStatus, useStore } from '../store.ts'
 import type { Project } from '../data.ts'
 import { ADITS_LOGO_URL } from '../../../packages/shared/logo'
 import { PROJECT_TEMPLATES } from './projectTemplates.ts'
-import { DESIGN_SYSTEMS } from '../../../packages/shared/design-systems'
+import { DESIGN_SYSTEMS, type DesignSystemSpec } from '../../../packages/shared/design-systems'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher.tsx'
 
 export default function ProjectList() {
@@ -116,21 +116,14 @@ export default function ProjectList() {
               />
 
               <div className="wsv2-home-create-field">
-                <label className="wsv2-home-create-label" htmlFor="design-system-select">
+                <label className="wsv2-home-create-label">
                   {t('designSystem')}
                 </label>
-                <select
-                  id="design-system-select"
-                  className="wsv2-home-create-select"
-                  value={designSystemId ?? ''}
-                  onChange={e => setDesignSystemId(e.target.value || null)}
+                <DesignSystemPicker
+                  value={designSystemId}
+                  onChange={setDesignSystemId}
                   disabled={creating}
-                >
-                  <option value="">{t('designSystemNone')}</option>
-                  {DESIGN_SYSTEMS.map(ds => (
-                    <option key={ds.id} value={ds.id}>{ds.label}</option>
-                  ))}
-                </select>
+                />
               </div>
 
               <button
@@ -207,6 +200,95 @@ export default function ProjectList() {
           )}
         </section>
       </main>
+    </div>
+  )
+}
+
+function DesignSystemPicker({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string | null
+  onChange: (id: string | null) => void
+  disabled?: boolean
+}) {
+  const { t } = useTranslation('projects')
+  const selected = DESIGN_SYSTEMS.find(ds => ds.id === value) ?? null
+
+  return (
+    <div className="wsv2-design-system-picker">
+      <button
+        type="button"
+        className={`wsv2-design-system-card wsv2-design-system-card--none${value === null ? ' is-selected' : ''}`}
+        onClick={() => onChange(null)}
+        disabled={disabled}
+      >
+        <div className="wsv2-design-system-card-none-preview" aria-hidden="true">
+          <div className="wsv2-design-system-card-none-slash" />
+        </div>
+        <div className="wsv2-design-system-card-copy">
+          <div className="wsv2-design-system-card-name">{t('designSystemNone')}</div>
+          <div className="wsv2-design-system-card-desc">{t('designSystemNoneDescription')}</div>
+        </div>
+      </button>
+
+      <div className="wsv2-design-system-grid">
+        {DESIGN_SYSTEMS.map(spec => (
+          <button
+            key={spec.id}
+            type="button"
+            className={`wsv2-design-system-card${value === spec.id ? ' is-selected' : ''}`}
+            onClick={() => onChange(spec.id)}
+            disabled={disabled}
+          >
+            <DesignSystemPreview spec={spec} />
+            <div className="wsv2-design-system-card-copy">
+              <div className="wsv2-design-system-card-name">{spec.label}</div>
+              <div className="wsv2-design-system-card-desc">{spec.description}</div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {selected && (
+        <div className="wsv2-design-system-selected">
+          <DesignSystemPreview spec={selected} />
+          <div className="wsv2-design-system-selected-copy">
+            <div className="wsv2-design-system-selected-kicker">{t('designSystemSelected')}</div>
+            <div className="wsv2-design-system-selected-name">{selected.label}</div>
+            <div className="wsv2-design-system-selected-desc">{selected.description}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function DesignSystemPreview({ spec }: { spec: DesignSystemSpec }) {
+  const style = {
+    '--ds-canvas': spec.preview.canvas,
+    '--ds-panel': spec.preview.panel,
+    '--ds-panel-alt': spec.preview.panelAlt,
+    '--ds-ink': spec.preview.ink,
+    '--ds-accent': spec.preview.accent,
+    '--ds-accent-soft': spec.preview.accentSoft,
+    '--ds-radius': spec.preview.radius,
+  } as CSSProperties
+
+  return (
+    <div className={`wsv2-design-system-preview is-${spec.preview.pattern}`} style={style} aria-hidden="true">
+      <div className="wsv2-design-system-preview-glow" />
+      <div className="wsv2-design-system-preview-frame">
+        <div className="wsv2-design-system-preview-topline">
+          <span className="wsv2-design-system-preview-dot" />
+          <span className="wsv2-design-system-preview-chip" />
+        </div>
+        <div className="wsv2-design-system-preview-hero" />
+        <div className="wsv2-design-system-preview-row wsv2-design-system-preview-row-strong" />
+        <div className="wsv2-design-system-preview-row" />
+        <div className="wsv2-design-system-preview-row wsv2-design-system-preview-row-short" />
+      </div>
     </div>
   )
 }
