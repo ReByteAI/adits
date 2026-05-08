@@ -95,7 +95,7 @@ You can always just type. You usually won't need to:
 - **Edit** — click an element on the page and change typography / sizing / layout in a properties panel. Each change applies live and queues a structured instruction for the agent.
 - **Draw** — a full-screen canvas overlay. Scribble strokes, drop sticky notes, circle the bit you want changed. On Send, the overlay goes along with the file.
 - **Comment** — pin a free-form note to an element. Keep it as feedback for yourself or "Send to Adits" to promote it into an agent instruction.
-- **Skills** — pre-made recipes the agent can invoke. *"Make a deck," "Wireframe," "Interactive prototype,"* etc. Pick one from the composer and the agent loads the matching playbook for this turn.
+- **Skills** — pre-made recipes the agent can invoke. *"Slide deck," "Wireframe," "Interactive prototype,"* etc. Pick one from the composer and the agent loads the matching playbook for this turn.
 
 ---
 
@@ -103,7 +103,7 @@ You can always just type. You usually won't need to:
 
 1. **Open the Welcome Workspace.** A starter project is seeded on first login with a handful of sample files — a deck, an image, a PDF, a Markdown note. You have something to click on immediately.
 2. **Drop a file** into the chat or the bench. Uploads land in the project's `uploads/` folder. The agent can read any of them on the next turn.
-3. **Ask for a deck.** `"Make me a 5-slide deck about <topic>."` The agent picks up the `make-a-deck` skill, writes an HTML file that works standalone in any browser, and drops it into `Design Files`.
+3. **Ask for a deck.** `"Make me a 5-slide deck about <topic>."` The agent picks up the `slide-deck` skill, writes an HTML file that works standalone in any browser, and drops it into `Design Files`.
 4. **Tweak it.** Click into the deck's properties. Pull a slider. Circle a title with Draw. Add a sticky note. Hit Send. The agent applies everything in one turn.
 5. **Export it.** Page → HTML bundle. Deck → PPTX or PDF. Image → PNG. Your files are your files.
 

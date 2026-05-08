@@ -85,14 +85,24 @@ async function buildBuildingSkills(): Promise<void> {
 
 async function buildSkills(): Promise<void> {
   for (const spec of SKILLS) {
-    const srcDir = join(REBYTE_SKILLS_DIR, spec.id)
-    const srcStat = await stat(srcDir).catch(() => null)
-    if (!srcStat?.isDirectory()) {
-      throw new Error(`Missing hosted skill source: ${srcDir}`)
-    }
-
+    const localBuildingDir = join(BUILDING_SKILLS_DIR, spec.id)
+    const localBuildingStat = await stat(localBuildingDir).catch(() => null)
     const zip = new JSZip()
-    await addDirToZip(zip, srcDir, spec.id)
+    if (localBuildingStat?.isDirectory()) {
+      await addDirToZip(zip, localBuildingDir, spec.id, relativePath =>
+        relativePath.endsWith('/skill.md')
+          ? relativePath.slice(0, -'skill.md'.length) + 'SKILL.md'
+          : relativePath === 'skill.md'
+            ? 'SKILL.md'
+            : relativePath)
+    } else {
+      const srcDir = join(REBYTE_SKILLS_DIR, spec.id)
+      const srcStat = await stat(srcDir).catch(() => null)
+      if (!srcStat?.isDirectory()) {
+        throw new Error(`Missing hosted skill source: ${srcDir}`)
+      }
+      await addDirToZip(zip, srcDir, spec.id)
+    }
     await writeZip(zip, join(OUT_ROOT, 'skills', `${spec.id}.zip`))
   }
 }

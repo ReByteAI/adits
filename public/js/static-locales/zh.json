@@ -109,7 +109,7 @@
     "h2FirstFive": "你的前五分钟",
     "step1": "<strong>打开欢迎工作区。</strong>首次登录时会种入一个起始项目,带有几份示例文件 — 一份幻灯片、一张图片、一份 PDF、一份 Markdown 笔记。你立即就有可点击的内容。",
     "step2": "<strong>拖入一个文件</strong>到聊天或工作台。上传会落到项目的 <code>uploads/</code> 文件夹。智能体在下一轮可以读取其中任何一个。",
-    "step3": "<strong>请求一个幻灯片。</strong><em>“给我做一份关于 &lt;主题&gt; 的 5 页幻灯片。”</em>智能体会拾取 <code>make-a-deck</code> 技能,写一个在任何浏览器中独立工作的 HTML 文件,并把它放到 <em>Design Files</em> 中。",
+    "step3": "<strong>请求一个幻灯片。</strong><em>“给我做一份关于 &lt;主题&gt; 的 5 页幻灯片。”</em>智能体会拾取 <code>slide-deck</code> 技能,写一个在任何浏览器中独立工作的 HTML 文件,并把它放到 <em>Design Files</em> 中。",
     "step4": "<strong>调整它。</strong>点击进入幻灯片的属性。拖动一个滑块。用绘制圈出标题。添加一张便签。点击发送。智能体会在一轮中应用所有更改。",
     "step5": "<strong>导出它。</strong>页面 → HTML 包。幻灯片 → PPTX 或 PDF。图片 → PNG。你的文件就是你的文件。",
     "cta": "打开一个项目 →",

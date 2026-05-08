@@ -315,7 +315,7 @@ export default function ChatPanel() {
     setSending(true)
     try {
       const baseOpts = {
-        // Picker stores bare slugs (`make-a-deck`). Hosted mode installs
+        // Picker stores bare slugs (`slide-deck`). Hosted mode installs
         // those skills into the sandbox before the task starts; local mode
         // ignores this field for now.
         skills: pickedSkills.length

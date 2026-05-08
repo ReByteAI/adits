@@ -41,9 +41,9 @@ export const SKILLS: readonly SkillSpec[] = [
     category: 'skill',
   },
   {
-    id: 'make-a-deck',
-    label: 'Make a deck',
-    description: 'Slide presentation in HTML',
+    id: 'slide-deck',
+    label: 'Slide deck',
+    description: 'Presentation in HTML',
     category: 'skill',
   },
   {
