@@ -25,6 +25,10 @@ Why this is non-negotiable:
 
 If you hand-roll the shell, the deck is broken even if it looks good.
 
+If `copy_starter_component` is unavailable in the current runtime, copy the
+bundled fallback from `assets/deck_stage.js` into the project as
+`/code/deck_stage.js` and use that file instead.
+
 ## What a deck is
 
 A deck is a sequence of **high-signal frames** for live presentation.
