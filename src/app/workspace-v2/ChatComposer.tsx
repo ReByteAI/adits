@@ -8,7 +8,14 @@ import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin'
 import { ClearEditorPlugin } from '@lexical/react/LexicalClearEditorPlugin'
-import { $getRoot, $isElementNode, CLEAR_EDITOR_COMMAND, type EditorState } from 'lexical'
+import {
+  $getRoot,
+  $isElementNode,
+  CLEAR_EDITOR_COMMAND,
+  KEY_ENTER_COMMAND,
+  COMMAND_PRIORITY_HIGH,
+  type EditorState,
+} from 'lexical'
 import { ImageNode } from '../bench/lexical/ImageNode.tsx'
 import { FileNode } from '../bench/lexical/FileNode.tsx'
 import { MediaSegmentNode } from '../bench/lexical/MediaSegmentNode.tsx'
@@ -128,15 +135,18 @@ function ComposerInner({ placeholder, onSubmit, disabled, sendLabel, skills, onR
   }, [editor, disabled, onSubmit, setPromptDirty, clearRound, projectId, roundPieces])
 
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault()
+    return editor.registerCommand<KeyboardEvent | null>(
+      KEY_ENTER_COMMAND,
+      (event) => {
+        if (!event || disabled) return false
+        if (event.shiftKey) return false
+        event.preventDefault()
         void submit()
-      }
-    }
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [submit])
+        return true
+      },
+      COMMAND_PRIORITY_HIGH,
+    )
+  }, [editor, disabled, submit])
 
   const canSend = canSendRaw && !disabled
 
