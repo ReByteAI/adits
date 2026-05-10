@@ -3070,8 +3070,8 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   border-bottom: 0;
 }
 .wsv2-confirm-dialog-title {
-  font: italic 500 36px/1.05 var(--font-display, 'Newsreader', serif);
-  letter-spacing: -0.02em;
+  font: 600 24px/1.2 inherit;
+  letter-spacing: -0.01em;
 }
 .wsv2-confirm-dialog-body {
   padding: 0 32px 8px;
@@ -3114,7 +3114,7 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
     padding: 24px 20px 12px;
   }
   .wsv2-confirm-dialog-title {
-    font-size: 30px;
+    font-size: 22px;
   }
   .wsv2-confirm-dialog-body {
     padding: 0 20px 8px;
