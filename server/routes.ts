@@ -48,6 +48,7 @@ import {
 } from '../packages/shared/data.js'
 import { getDesignSystem } from '../packages/shared/design-systems.js'
 import { getBuildingSkill } from '../packages/shared/building-skills.js'
+import { SANDBOX_FILE_ROOT, isUserVisibleProjectArtifact } from './visible-project-files.js'
 
 /** The shared context type used by every handler and every helper in
  *  sandbox.ts / rebyte-auth.ts. Having a single shape (no Bindings) keeps
@@ -379,8 +380,6 @@ app.post('/projects/:id/skills', requireAuth, async (c) => {
 
 // ─── Files ───
 
-const SANDBOX_FILE_ROOT = '/code'
-
 function b64url(s: string): string {
   const bytes = new TextEncoder().encode(s)
   let bin = ''
@@ -408,27 +407,6 @@ function isSafeSandboxPath(path: string): boolean {
   for (const seg of rel.split('/')) {
     if (seg === '' || seg === '.' || seg === '..') return false
   }
-  return true
-}
-
-const MAX_LIST_DEPTH = 3
-
-const HIDDEN_FILE_NAMES = new Set([
-  'agent.md',
-  'agents.md',
-  'claude.md',
-  'claude.local.md',
-  'gemini.md',
-])
-
-function isVisibleSandboxFile(absPath: string): boolean {
-  if (!absPath.startsWith(SANDBOX_FILE_ROOT + '/')) return false
-  const rel = absPath.slice(SANDBOX_FILE_ROOT.length + 1)
-  const parts = rel.split('/')
-  if (parts.length < 1 || parts.length > MAX_LIST_DEPTH) return false
-  const name = parts[parts.length - 1]
-  if (HIDDEN_FILE_NAMES.has(name.toLowerCase())) return false
-  if (detectType(name).key === 'file') return false
   return true
 }
 
@@ -508,7 +486,7 @@ app.get('/projects/:projectId/files', requireAuth, async (c) => {
     }
     throw err
   }
-  const visibleEntries = sandboxEntries.filter(e => isVisibleSandboxFile(e.path))
+  const visibleEntries = sandboxEntries.filter(e => isUserVisibleProjectArtifact(e.path))
 
   const nowIso = new Date().toISOString()
   const sandboxFiles: ApiFileResponse[] = visibleEntries.map(e => {
