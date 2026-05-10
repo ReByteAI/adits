@@ -3135,6 +3135,340 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   }
 }
 
+/* ───────────────────── Upload dialog ───────────────────── */
+.wsv2-upload-dialog {
+  max-width: 520px;
+}
+.wsv2-upload-dialog-header {
+  padding: 24px 24px 20px;
+}
+.wsv2-upload-dialog-subtitle {
+  max-width: 28rem;
+}
+.wsv2-upload-dialog-body {
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.wsv2-upload-dialog-dropzone {
+  display: block;
+  width: 100%;
+  border: 1px dashed rgba(15, 12, 8, 0.18);
+  border-radius: 14px;
+  padding: 40px 24px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.14s ease, background 0.14s ease, transform 0.14s ease;
+  background: rgba(255, 255, 255, 0.34);
+  outline: none;
+}
+.wsv2-upload-dialog-dropzone:focus-visible {
+  border-color: var(--wsv2-accent);
+  box-shadow: 0 0 0 3px rgba(27, 54, 93, 0.1);
+}
+.wsv2-upload-dialog-dropzone:hover,
+.wsv2-upload-dialog-dropzone.is-dragover {
+  border-color: var(--wsv2-accent);
+  background: rgba(27, 54, 93, 0.035);
+}
+.wsv2-upload-dialog-dropzone.is-dragover {
+  transform: translateY(-1px);
+}
+.wsv2-upload-dialog-dropzone-icon {
+  display: flex;
+  justify-content: center;
+  color: var(--wsv2-ink-2);
+  margin-bottom: 12px;
+}
+.wsv2-upload-dialog-dropzone:hover .wsv2-upload-dialog-dropzone-icon,
+.wsv2-upload-dialog-dropzone.is-dragover .wsv2-upload-dialog-dropzone-icon {
+  color: var(--wsv2-accent);
+}
+.wsv2-upload-dialog-dropzone-text {
+  margin: 0 0 6px;
+  font: 600 17px/1.35 inherit;
+  color: var(--wsv2-ink);
+}
+.wsv2-upload-dialog-dropzone-hint {
+  margin: 0;
+  font: 400 13px/1.4 inherit;
+  color: var(--wsv2-ink-2);
+}
+.wsv2-upload-dialog-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 2px 0 0;
+  font: 500 12px/1.1 inherit;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--wsv2-ink-3);
+}
+.wsv2-upload-dialog-divider span {
+  flex-shrink: 0;
+}
+.wsv2-upload-dialog-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(15, 12, 8, 0.08);
+}
+.wsv2-upload-dialog-cloud-sources {
+  display: flex;
+  gap: 10px;
+}
+.wsv2-upload-dialog-cloud-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid rgba(15, 12, 8, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--wsv2-ink);
+  font: 500 14px/1 inherit;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+.wsv2-upload-dialog-cloud-btn:hover {
+  border-color: rgba(15, 12, 8, 0.24);
+  background: rgba(255, 255, 255, 0.78);
+}
+.wsv2-upload-dialog-cloud-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.wsv2-upload-dialog-link-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.wsv2-upload-dialog-link-input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(15, 12, 8, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--wsv2-ink);
+  font: 400 14px/1 inherit;
+  outline: none;
+  transition: border-color 0.14s ease, box-shadow 0.14s ease;
+}
+.wsv2-upload-dialog-link-input::placeholder {
+  color: var(--wsv2-ink-3);
+}
+.wsv2-upload-dialog-link-input:focus {
+  border-color: var(--wsv2-accent);
+  box-shadow: 0 0 0 3px rgba(27, 54, 93, 0.08);
+}
+.wsv2-upload-dialog-link-btn {
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid rgba(15, 12, 8, 0.12);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--wsv2-ink);
+  font: 500 14px/1 inherit;
+  cursor: pointer;
+  transition: border-color 0.14s ease, background 0.14s ease;
+}
+.wsv2-upload-dialog-link-btn:hover:not(:disabled) {
+  border-color: rgba(15, 12, 8, 0.24);
+  background: rgba(15, 12, 8, 0.035);
+}
+.wsv2-upload-dialog-link-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.wsv2-upload-dialog-link-error {
+  margin: -6px 0 0;
+  font: 400 13px/1.45 inherit;
+  color: oklch(55% 0.2 25);
+}
+
+/* ───────────────────── Tasks panel ───────────────────── */
+.wsv2-tasks-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 420px;
+  max-height: 70vh;
+  background: var(--wsv2-bench-bg);
+  border: 1px solid rgba(15, 12, 8, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(15, 12, 8, 0.14);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.wsv2-tasks-panel-header {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(15, 12, 8, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wsv2-tasks-panel-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font: 600 11px/1.1 ui-monospace, monospace;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--wsv2-ink);
+}
+.wsv2-tasks-panel-count {
+  color: var(--wsv2-ink-3);
+  font-weight: 400;
+}
+.wsv2-tasks-panel-search {
+  width: 100%;
+  height: 34px;
+  padding: 0 11px;
+  font: 400 13px/1 inherit;
+  color: var(--wsv2-ink);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(15, 12, 8, 0.1);
+  border-radius: 9px;
+  outline: none;
+}
+.wsv2-tasks-panel-search:focus {
+  border-color: rgba(15, 12, 8, 0.26);
+}
+.wsv2-tasks-panel-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+.wsv2-tasks-panel-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--wsv2-ink-3);
+  font: 400 13px/1.4 inherit;
+}
+.wsv2-tasks-panel-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(15, 12, 8, 0.05);
+}
+.wsv2-tasks-panel-row:last-child {
+  border-bottom: none;
+}
+.wsv2-tasks-panel-status {
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--wsv2-ink-3);
+}
+.wsv2-tasks-panel-status--running,
+.wsv2-tasks-panel-status--pending,
+.wsv2-tasks-panel-status--queued,
+.wsv2-tasks-panel-status--processing {
+  color: var(--wsv2-accent);
+  animation: tasks-panel-pulse 1.4s ease-in-out infinite;
+}
+.wsv2-tasks-panel-status--completed {
+  color: oklch(55% 0.15 145);
+}
+.wsv2-tasks-panel-status--failed {
+  color: oklch(55% 0.2 25);
+}
+.wsv2-tasks-panel-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.wsv2-tasks-panel-prompt {
+  font: 500 13px/1.4 inherit;
+  color: var(--wsv2-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.wsv2-tasks-panel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font: 400 11px/1.4 ui-monospace, monospace;
+  color: var(--wsv2-ink-3);
+}
+.wsv2-tasks-panel-project {
+  color: var(--wsv2-ink-2);
+  font-weight: 500;
+}
+.wsv2-tasks-panel-sep {
+  opacity: 0.5;
+}
+.wsv2-tasks-panel-meta a {
+  color: var(--wsv2-accent);
+  text-decoration: none;
+}
+.wsv2-tasks-panel-meta a:hover {
+  text-decoration: underline;
+}
+.wsv2-tasks-panel-cancel {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--wsv2-ink-3);
+  cursor: pointer;
+  transition: color 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+.wsv2-tasks-panel-cancel:hover:not(:disabled) {
+  color: oklch(55% 0.2 25);
+  border-color: oklch(55% 0.2 25 / 0.3);
+  background: oklch(55% 0.2 25 / 0.08);
+}
+.wsv2-tasks-panel-cancel:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+.wsv2-tasks-panel-cancel-spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid rgba(15, 12, 8, 0.12);
+  border-top-color: var(--wsv2-ink-2);
+  border-radius: 50%;
+  animation: bench-spin 0.8s linear infinite;
+}
+@media (max-width: 720px) {
+  .wsv2-upload-dialog-body {
+    padding: 0 20px 20px;
+  }
+  .wsv2-upload-dialog-link-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .wsv2-upload-dialog-link-btn {
+    width: 100%;
+  }
+  .wsv2-tasks-panel {
+    width: min(420px, calc(100vw - 24px));
+    right: 12px;
+  }
+}
+
 /* ───────────────────── Skills modal ───────────────────── */
 .wsv2-skills-section { padding: 12px 0 4px; }
 .wsv2-skills-section-label {

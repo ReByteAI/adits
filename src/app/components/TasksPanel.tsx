@@ -84,27 +84,27 @@ export default function TasksPanel({ onClose }: { onClose: () => void }) {
   const runningCount = allTasks.filter(t => isNonTerminalStatus(t.status)).length
 
   return (
-    <div className="tasks-panel" ref={ref} role="dialog" aria-label={t('tasks.panelLabel')}>
-      <div className="tasks-panel-header">
-        <div className="tasks-panel-title">
+    <div className="wsv2-tasks-panel" ref={ref} role="dialog" aria-label={t('tasks.panelLabel')}>
+      <div className="wsv2-tasks-panel-header">
+        <div className="wsv2-tasks-panel-title">
           {t('tasks.panelTitle')}
-          <span className="tasks-panel-count">
+          <span className="wsv2-tasks-panel-count">
             {allTasks.length}
             {runningCount > 0 && ` · ${t('tasks.running', { count: runningCount })}`}
           </span>
         </div>
         <input
           type="search"
-          className="tasks-panel-search"
+          className="wsv2-tasks-panel-search"
           placeholder={t('tasks.filterPlaceholder')}
           value={query}
           onChange={e => setQuery(e.target.value)}
           autoFocus
         />
       </div>
-      <div className="tasks-panel-list">
+      <div className="wsv2-tasks-panel-list">
         {filtered.length === 0 && (
-          <div className="tasks-panel-empty">
+          <div className="wsv2-tasks-panel-empty">
             {allTasks.length === 0 ? t('tasks.empty') : t('tasks.noMatches')}
           </div>
         )}
@@ -112,25 +112,25 @@ export default function TasksPanel({ onClose }: { onClose: () => void }) {
           const isCancelable = isNonTerminalStatus(task.status)
           const isCanceling = cancelingIds.has(task.id)
           return (
-            <div key={task.id} className="tasks-panel-row">
-              <span className={`tasks-panel-status tasks-panel-status--${task.status}`}>
+            <div key={task.id} className="wsv2-tasks-panel-row">
+              <span className={`wsv2-tasks-panel-status wsv2-tasks-panel-status--${task.status}`}>
                 {isNonTerminalStatus(task.status) ? '●' : task.status === 'completed' ? '✓' : task.status === 'failed' ? '✗' : '○'}
               </span>
-              <div className="tasks-panel-body">
-                <div className="tasks-panel-prompt">{task.title ?? task.prompt}</div>
-                <div className="tasks-panel-meta">
-                  <span className="tasks-panel-project">{task.projectName}</span>
-                  <span className="tasks-panel-sep">·</span>
+              <div className="wsv2-tasks-panel-body">
+                <div className="wsv2-tasks-panel-prompt">{task.title ?? task.prompt}</div>
+                <div className="wsv2-tasks-panel-meta">
+                  <span className="wsv2-tasks-panel-project">{task.projectName}</span>
+                  <span className="wsv2-tasks-panel-sep">·</span>
                   <span>{tchat(`status.${task.status}` as 'status.completed', { defaultValue: task.status })}</span>
                   {task.created_at && (
                     <>
-                      <span className="tasks-panel-sep">·</span>
+                      <span className="wsv2-tasks-panel-sep">·</span>
                       <span title={task.created_at}>{formatSqliteRelative(task.created_at)}</span>
                     </>
                   )}
                   {task.url && (
                     <>
-                      <span className="tasks-panel-sep">·</span>
+                      <span className="wsv2-tasks-panel-sep">·</span>
                       <a href={task.url} target="_blank" rel="noopener noreferrer">{t('tasks.detail')}</a>
                     </>
                   )}
@@ -139,14 +139,14 @@ export default function TasksPanel({ onClose }: { onClose: () => void }) {
               {isCancelable && (
                 <button
                   type="button"
-                  className="tasks-panel-cancel"
+                  className="wsv2-tasks-panel-cancel"
                   aria-label={t('tasks.cancelTask')}
                   title={t('tasks.cancelTask')}
                   disabled={isCanceling}
                   onClick={() => onCancel(task.id)}
                 >
                   {isCanceling ? (
-                    <span className="tasks-panel-cancel-spinner" aria-hidden="true" />
+                    <span className="wsv2-tasks-panel-cancel-spinner" aria-hidden="true" />
                   ) : (
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <line x1="6" y1="6" x2="18" y2="18" />
