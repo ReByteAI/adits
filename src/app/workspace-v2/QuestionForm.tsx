@@ -132,10 +132,23 @@ export function QuestionForm({
     onSubmit(built.answers, built.attachments)
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (busy || readOnly || !onSubmit) return
+    if (e.key !== 'Enter' || e.shiftKey || e.isComposing) return
+    const target = e.target as HTMLElement | null
+    if (!target) return
+    const tag = target.tagName
+    if (tag !== 'TEXTAREA' && tag !== 'INPUT') return
+    e.preventDefault()
+    const built = buildAnswers(payload, state)
+    onSubmit(built.answers, built.attachments)
+  }
+
   return (
     <form
       className={`wsv2-qf${readOnly ? ' is-readonly' : ''}`}
       onSubmit={handleSubmit}
+      onKeyDown={handleKeyDown}
       aria-disabled={readOnly}
     >
       <h2 className="wsv2-qf-title">{payload.title}</h2>
