@@ -3061,6 +3061,80 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   overflow-y: auto;
 }
 
+/* ───────────────────── Confirm dialog ───────────────────── */
+.wsv2-confirm-dialog {
+  max-width: 640px;
+}
+.wsv2-confirm-dialog-header {
+  padding: 28px 32px 12px;
+  border-bottom: 0;
+}
+.wsv2-confirm-dialog-title {
+  font: italic 500 36px/1.05 var(--font-display, 'Newsreader', serif);
+  letter-spacing: -0.02em;
+}
+.wsv2-confirm-dialog-body {
+  padding: 0 32px 8px;
+  overflow: visible;
+}
+.wsv2-confirm-dialog-body p {
+  margin: 0;
+  font: 400 20px/1.42 var(--font-body, 'Inter', sans-serif);
+  color: var(--wsv2-ink-2);
+}
+.wsv2-confirm-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 28px 32px 32px;
+}
+.wsv2-confirm-dialog-cancel,
+.wsv2-confirm-dialog-confirm {
+  min-width: 170px;
+  min-height: 76px;
+  border-radius: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+.wsv2-confirm-dialog-cancel {
+  background: transparent;
+  border: 1.5px solid rgba(15, 12, 8, 0.72);
+}
+.wsv2-confirm-dialog-cancel:hover {
+  background: rgba(15, 12, 8, 0.035);
+}
+.wsv2-confirm-dialog-confirm.is-danger {
+  background: var(--wsv2-accent);
+}
+.wsv2-confirm-dialog-confirm.is-danger:hover {
+  background: var(--color-accent-hover);
+}
+@media (max-width: 720px) {
+  .wsv2-confirm-dialog-header {
+    padding: 24px 20px 12px;
+  }
+  .wsv2-confirm-dialog-title {
+    font-size: 30px;
+  }
+  .wsv2-confirm-dialog-body {
+    padding: 0 20px 8px;
+  }
+  .wsv2-confirm-dialog-body p {
+    font-size: 18px;
+  }
+  .wsv2-confirm-dialog-actions {
+    padding: 24px 20px 20px;
+    gap: 12px;
+  }
+  .wsv2-confirm-dialog-cancel,
+  .wsv2-confirm-dialog-confirm {
+    min-width: 0;
+    flex: 1 1 0;
+    min-height: 64px;
+    font-size: 17px;
+  }
+}
+
 /* ───────────────────── Skills modal ───────────────────── */
 .wsv2-skills-section { padding: 12px 0 4px; }
 .wsv2-skills-section-label {
