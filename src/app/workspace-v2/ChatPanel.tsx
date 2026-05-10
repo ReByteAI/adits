@@ -54,6 +54,7 @@ export default function ChatPanel() {
   const createChatTask = useStore(s => s.createChatTask)
   const sendFollowUp = useStore(s => s.sendFollowUp)
   const setActiveForm = useStore(s => s.setActiveForm)
+  const taskThreadRefreshKey = useStore(s => s.taskThreadRefreshKey)
 
   const chatWidth = useChatWidth()
   const setChatWidth = useUiStore((s) => s.setChatWidth)
@@ -231,7 +232,7 @@ export default function ChatPanel() {
       }
     })()
     return () => { cancelled = true }
-  }, [loadedTaskId, localRefetch])
+  }, [loadedTaskId, localRefetch, taskThreadRefreshKey])
 
   useEffect(() => () => {
     for (const id of terminalRefreshTimersRef.current) window.clearTimeout(id)
@@ -356,11 +357,6 @@ export default function ChatPanel() {
                 [tidAtSend]: list.map(e => e.tempId === tempId ? { ...e, serverId } : e),
               }
             })
-          }
-          // Trigger a `/content` refetch so the new prompt + Claude's
-          // response show up without waiting for the task to terminate.
-          if (useStore.getState().activeProjectId === pid) {
-            setLocalRefetch(n => n + 1)
           }
         } catch (err) {
           setFollowUps(prev => {

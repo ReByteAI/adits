@@ -39,6 +39,13 @@ interface ProjectStore {
    *  iframe just keeps showing whatever it loaded first. */
   iframeReloadKey: number
   bumpIframeReloadKey: () => void
+  /** Monotonic counter bumped whenever any non-chat surface submits a
+   *  follow-up (question form, future bench-side actions, etc.). The
+   *  loaded ChatPanel watches it and refetches `/content` so the left
+   *  thread reflects externally-submitted prompts without a full page
+   *  refresh. */
+  taskThreadRefreshKey: number
+  bumpTaskThreadRefreshKey: () => void
   /** Active `ask-design-questions` form payload, published by ChatPanel
    *  when the latest terminal prompt in the loaded task has
    *  `formPayload` set and no follow-up prompt has been sent yet. The
@@ -226,6 +233,8 @@ export const useStore = create<ProjectStore>((set, get) => ({
   pendingDelete: null,
   iframeReloadKey: 0,
   bumpIframeReloadKey: () => set(s => ({ iframeReloadKey: s.iframeReloadKey + 1 })),
+  taskThreadRefreshKey: 0,
+  bumpTaskThreadRefreshKey: () => set(s => ({ taskThreadRefreshKey: s.taskThreadRefreshKey + 1 })),
   activeForm: null,
   setActiveForm: (next) => set({ activeForm: next }),
 
@@ -792,9 +801,11 @@ export const useStore = create<ProjectStore>((set, get) => ({
     const trimmed = prompt.trim()
     if (!trimmed) throw new Error('prompt is required')
     const res = await apiSendTaskPrompt(taskId, { prompt: trimmed, executor: opts?.executor, model: opts?.model, skills: opts?.skills })
+    set(s => ({ taskThreadRefreshKey: s.taskThreadRefreshKey + 1 }))
     // Refresh tasksByProject for any panels (TasksPanel, History) that
-    // key off it. ChatPanel triggers its own /content refetch via
-    // `localRefetch` after handleSend resolves.
+    // key off it. The global `taskThreadRefreshKey` bump above tells the
+    // loaded ChatPanel to refetch `/content` even when the follow-up came
+    // from a non-chat surface like the question form.
     const ownerProjectId = Object.keys(get().tasksByProject).find(pid =>
       get().tasksByProject[pid]?.some(t => t.id === taskId),
     )
