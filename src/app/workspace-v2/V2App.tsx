@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useCurrentUser } from '../auth-shim.tsx'
 import { useStore, useActiveProjectId } from '../store.ts'
+import { useUiStore } from '../ui-store.ts'
 import { useLanguageSync } from '../i18n/useLanguageSync.ts'
 import WorkspaceV2 from './WorkspaceV2'
 import ProjectList from './ProjectList'
@@ -19,6 +20,13 @@ import '../../../public/css/workspace-v2.css'
 function projectIdFromPath(): string {
   const m = window.location.pathname.match(/^\/project\/([^/]+)/)
   return m ? m[1] : ''
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null
+  if (!el) return false
+  const tag = el.tagName
+  return el.isContentEditable || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT'
 }
 
 export default function V2App() {
@@ -66,6 +74,19 @@ export default function V2App() {
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [selectProject])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.repeat) return
+      if (!e.ctrlKey || !e.shiftKey || e.altKey || e.metaKey) return
+      if (e.code !== 'KeyD') return
+      if (isEditableTarget(e.target)) return
+      e.preventDefault()
+      useUiStore.getState().toggleDebugView()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Wake-up reconciliation. SSE drops while the tab is hidden
   // (`fetchEventSource` doesn't survive backgrounding), so anything

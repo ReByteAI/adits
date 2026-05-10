@@ -28,8 +28,8 @@ interface UiStore {
 
   /** Hidden debug panel flag. When true, a top-right Nav button appears
    *  that opens a flat list of every task across every project. Flipped
-   *  by 7-clicking the logo (matching CC2's trick) or via the console
-   *  helper `window.__aditsDebug.enable()`. */
+   *  by the global `Ctrl+Shift+D` hotkey or via the console helper
+   *  `window.__aditsDebug.enable()`. */
   debugViewEnabled: boolean
   toggleDebugView: () => void
   setDebugView: (value: boolean) => void
@@ -64,7 +64,7 @@ export const useSidebarCollapsed = () => useUiStore((s) => s.sidebarCollapsed)
 export const useChatWidth = () => useUiStore((s) => s.chatWidth)
 export const useDebugViewEnabled = () => useUiStore((s) => s.debugViewEnabled)
 
-// Console helper so devs can flip the debug bit without the 7-click gesture.
+// Console helper so devs can flip the debug bit without the hotkey.
 if (typeof window !== 'undefined') {
   ;(window as any).__aditsDebug = {
     enable: () => useUiStore.getState().setDebugView(true),
