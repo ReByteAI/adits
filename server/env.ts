@@ -47,6 +47,8 @@ export const env = {
   REBYTE_CONSOLE_URL: process.env.REBYTE_CONSOLE_URL ?? 'https://app.rebyte.ai/share',
   REBYTE_API_KEY: rebyteRequired('REBYTE_API_KEY'),
   REBYTE_WEBHOOK_SECRET: rebyteRequired('REBYTE_WEBHOOK_SECRET'),
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY ?? '',
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET ?? '',
 
   /** Public base URL used when telling Rebyte where to POST webhooks.
    *  On Cloud Run this is the service URL (e.g. https://adits-api-xxx.run.app).

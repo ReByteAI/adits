@@ -2255,6 +2255,164 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
 }
 .wsv2-home-account-menu-item:hover { background: var(--wsv2-body-bg); }
 
+.adits-credits-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 10, 14, 0.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1200;
+}
+
+.adits-credits-dialog {
+  width: min(760px, 100%);
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.16);
+  padding: 24px;
+}
+
+.adits-credits-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.adits-credits-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.adits-credits-title {
+  margin: 6px 0 0;
+  font-size: 28px;
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.adits-credits-close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.adits-credits-note,
+.adits-credits-error {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.adits-credits-note { background: #f8fafc; color: #334155; }
+.adits-credits-error { background: #fff1f2; color: #be123c; }
+
+.adits-credits-balance {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.adits-credits-balance-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+}
+
+.adits-credits-balance-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.adits-credits-meta {
+  display: flex;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.adits-credits-packs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.adits-credits-pack {
+  appearance: none;
+  text-align: left;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  background: #fff;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.adits-credits-pack:hover {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.24);
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.08);
+}
+
+.adits-credits-pack:disabled {
+  opacity: 0.72;
+  cursor: default;
+  transform: none;
+}
+
+.adits-credits-pack-price {
+  font-size: 26px;
+  line-height: 1;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.adits-credits-pack-amount {
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.adits-credits-pack-foot {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.adits-credits-pack-cta {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+@media (max-width: 720px) {
+  .adits-credits-dialog { padding: 18px; }
+  .adits-credits-balance,
+  .adits-credits-packs { grid-template-columns: 1fr; }
+  .adits-credits-meta { flex-direction: column; gap: 6px; }
+}
+
 /* --- Browser (right column) --- */
 .wsv2-home-search { position: relative; flex: 0 0 auto; }
 .wsv2-home-search-input {

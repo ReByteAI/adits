@@ -7,6 +7,7 @@ import { ADITS_LOGO_URL } from '../../../packages/shared/logo'
 import { PROJECT_TEMPLATES } from './projectTemplates.ts'
 import { DESIGN_SYSTEMS, type DesignSystemSpec } from '../../../packages/shared/design-systems'
 import { LanguageSwitcher } from '../i18n/LanguageSwitcher.tsx'
+import CreditsDialog from '../components/CreditsDialog.tsx'
 
 export default function ProjectList() {
   const { t } = useTranslation('projects')
@@ -305,6 +306,7 @@ function AccountButton() {
   const { user } = useCurrentUser()
   const { signOut, openUserProfile } = useAccountActions()
   const [open, setOpen] = useState(false)
+  const [creditsOpen, setCreditsOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -322,6 +324,7 @@ function AccountButton() {
 
   return (
     <div className="wsv2-home-account" ref={wrapRef}>
+      <CreditsDialog open={creditsOpen} onClose={() => setCreditsOpen(false)} />
       <button
         type="button"
         className="wsv2-home-account-btn"
@@ -350,6 +353,14 @@ function AccountButton() {
             onClick={() => { setOpen(false); openUserProfile() }}
           >
             {t('accountSettings')}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="wsv2-home-account-menu-item"
+            onClick={() => { setOpen(false); setCreditsOpen(true) }}
+          >
+            Buy credits
           </button>
           <button
             type="button"

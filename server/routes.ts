@@ -28,6 +28,7 @@ import { Hono, type Context } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { streamSSE } from 'hono/streaming'
 import { timingSafeEqual as nodeTimingSafeEqual } from 'node:crypto'
+import Stripe from 'stripe'
 import { requireAuth } from './auth.js'
 import { db } from './db.js'
 import { env } from './env.js'
@@ -61,6 +62,59 @@ type AppEnv = { Variables: { userId: string } }
 
 export const app = new Hono<AppEnv>()
 
+const ADITS_CREDIT_PACKS = {
+  usd_10: { lookupKey: 'adits_credits_10', label: '$10', credits: 1000, amountUsd: 10 },
+  usd_30: { lookupKey: 'adits_credits_30', label: '$30', credits: 3000, amountUsd: 30 },
+  usd_50: { lookupKey: 'adits_credits_50', label: '$50', credits: 5000, amountUsd: 50 },
+  usd_100: { lookupKey: 'adits_credits_100', label: '$100', credits: 10000, amountUsd: 100 },
+} as const
+
+type AditsCreditPackKey = keyof typeof ADITS_CREDIT_PACKS
+
+let stripeClient: Stripe | null = null
+
+function getStripe(): Stripe {
+  if (!env.STRIPE_SECRET_KEY) {
+    throw new HTTPException(503, { message: 'Stripe is not configured.' })
+  }
+  if (!stripeClient) {
+    stripeClient = new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: '2025-08-27.basil' })
+  }
+  return stripeClient
+}
+
+async function getUserRebyteBilling(userId: string): Promise<{
+  rebyteAccountId: string
+  rebyteApiKey: string
+}> {
+  const row = await db.first<{ rebyte_account_id: string | null; rebyte_api_key: string | null }>(
+    'SELECT rebyte_account_id, rebyte_api_key FROM users WHERE id = $1',
+    [userId],
+  )
+
+  const rebyteApiKey = row?.rebyte_api_key ?? await requireUserRebyteKey(userId)
+  const rebyteAccountId = row?.rebyte_account_id ?? (
+    await db.first<{ rebyte_account_id: string | null }>(
+      'SELECT rebyte_account_id FROM users WHERE id = $1',
+      [userId],
+    )
+  )?.rebyte_account_id
+
+  if (!rebyteAccountId) {
+    throw new HTTPException(503, { message: 'Rebyte account provisioning failed. Try again.' })
+  }
+
+  await rebyteJSON(`/accounts/${rebyteAccountId}/billing`, {
+    method: 'PATCH',
+    apiKey: env.REBYTE_API_KEY,
+    body: JSON.stringify({ billToParent: false }),
+  }).catch(err => {
+    console.warn('[billing] failed to enforce self-billed account', (err as Error).message)
+  })
+
+  return { rebyteAccountId, rebyteApiKey }
+}
+
 // ─── Global error handler ───
 
 app.onError((err, c) => {
@@ -75,6 +129,59 @@ app.onError((err, c) => {
 })
 
 app.get('/health', c => c.json({ ok: true }))
+
+app.post('/webhooks/stripe', async (c) => {
+  if (!env.STRIPE_WEBHOOK_SECRET) {
+    return c.json({ error: 'Stripe webhook secret not configured' }, 503)
+  }
+
+  const signature = c.req.header('stripe-signature')
+  if (!signature) return c.json({ error: 'Missing stripe-signature header' }, 400)
+
+  const rawBody = await c.req.raw.text()
+  let event: Stripe.Event
+
+  try {
+    event = getStripe().webhooks.constructEvent(rawBody, signature, env.STRIPE_WEBHOOK_SECRET)
+  } catch (err) {
+    return c.json({ error: `Webhook verification failed: ${(err as Error).message}` }, 400)
+  }
+
+  try {
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session
+      if (session.mode === 'payment' && session.metadata?.type === 'adits_credit_purchase') {
+        const rebyteAccountId = session.metadata.rebyte_account_id
+        const creditAmount = parseInt(session.metadata.credit_amount ?? '0', 10)
+        const externalPaymentId = String(session.payment_intent ?? session.id)
+
+        if (rebyteAccountId && creditAmount > 0) {
+          await rebyteJSON('/billing/topups', {
+            method: 'POST',
+            apiKey: env.REBYTE_API_KEY,
+            body: JSON.stringify({
+              accountId: rebyteAccountId,
+              amount: creditAmount,
+              externalPaymentId,
+              description: `Adits credit purchase (${session.metadata.pack_key ?? 'custom'})`,
+              metadata: {
+                stripe_session_id: session.id,
+                stripe_payment_intent: session.payment_intent,
+                user_id: session.metadata.user_id ?? null,
+                pack_key: session.metadata.pack_key ?? null,
+              },
+            }),
+          })
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[stripe-webhook]', err)
+    return c.json({ error: 'Failed to process webhook' }, 500)
+  }
+
+  return c.json({ ok: true })
+})
 
 // ─── Webhook (no auth — Rebyte calls this directly) ───
 
@@ -173,6 +280,70 @@ app.post('/me', requireAuth, async (c) => {
   }
 
   return c.json({ ok: true })
+})
+
+app.get('/billing/credits', requireAuth, async (c) => {
+  const userId = c.get('userId')
+  const { rebyteApiKey } = await getUserRebyteBilling(userId)
+  const credits = await rebyteJSON<{
+    balance: number
+    expiringBalance: number
+    expiringAllowance: number
+    totalAvailable: number
+    lifetimePurchased: number
+    lifetimeUsed: number
+    updatedAt: string | null
+  }>('/billing/credits', { apiKey: rebyteApiKey })
+
+  return c.json({
+    ...credits,
+    packs: Object.entries(ADITS_CREDIT_PACKS).map(([key, pack]) => ({
+      key,
+      label: pack.label,
+      credits: pack.credits,
+      amountUsd: pack.amountUsd,
+    })),
+  })
+})
+
+app.post('/billing/checkout', requireAuth, async (c) => {
+  const userId = c.get('userId')
+  const body = await c.req.json<{ packKey?: string }>()
+  const packKey = body.packKey as AditsCreditPackKey | undefined
+  if (!packKey || !(packKey in ADITS_CREDIT_PACKS)) {
+    return c.json({ error: 'Invalid packKey' }, 400)
+  }
+
+  const pack = ADITS_CREDIT_PACKS[packKey]
+  const { rebyteAccountId } = await getUserRebyteBilling(userId)
+  const origin = new URL(c.req.url).origin
+
+  const prices = await getStripe().prices.list({
+    lookup_keys: [pack.lookupKey],
+    limit: 1,
+    active: true,
+  })
+  const price = prices.data[0]
+  if (!price) {
+    return c.json({ error: `Stripe price not configured for ${pack.lookupKey}` }, 500)
+  }
+
+  const session = await getStripe().checkout.sessions.create({
+    mode: 'payment',
+    payment_method_types: ['card'],
+    line_items: [{ price: price.id, quantity: 1 }],
+    success_url: `${origin}/projects?buyCredits=success`,
+    cancel_url: `${origin}/projects?buyCredits=canceled`,
+    metadata: {
+      type: 'adits_credit_purchase',
+      user_id: userId,
+      rebyte_account_id: rebyteAccountId,
+      pack_key: packKey,
+      credit_amount: String(pack.credits),
+    },
+  })
+
+  return c.json({ checkoutUrl: session.url })
 })
 
 // ─── i18n: locale detection + per-user language preference ───

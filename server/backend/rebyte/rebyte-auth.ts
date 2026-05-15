@@ -87,7 +87,11 @@ export async function provisionRebyteAccount(
 
   const result = await rebyteJSON<{ id: string; api_key: string }>(
     '/accounts',
-    { method: 'POST', body: JSON.stringify({ name: name || userId }), apiKey: env.REBYTE_API_KEY },
+    {
+      method: 'POST',
+      body: JSON.stringify({ name: name || userId, billToParent: false }),
+      apiKey: env.REBYTE_API_KEY,
+    },
   )
   // CAS guard: only set if not already provisioned.
   const update = await db.run(

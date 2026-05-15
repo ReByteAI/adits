@@ -46,6 +46,7 @@
     "react-i18next": "^17.0.4",
     "react-pdf": "^10.4.1",
     "rebyte-sandbox": "git+https://github.com/ReByteAI/sandbox-sdk.git#84b68495e0e958e75835336a59aa9f125dcca0d8",
+    "stripe": "^18.5.0",
     "xlsx": "^0.18.5",
     "zustand": "^5.0.12"
   },
