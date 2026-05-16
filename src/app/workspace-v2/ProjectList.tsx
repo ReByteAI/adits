@@ -80,6 +80,7 @@ export default function ProjectList() {
               <path d="M3 9l6-6M5 3h4v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
             </svg>
           </a>
+          <AccountButton />
         </nav>
       </header>
 
@@ -146,8 +147,6 @@ export default function ProjectList() {
           )}
 
           <p className="wsv2-home-privacy">{t('privacy')}</p>
-
-          <AccountButton />
         </section>
 
         <section className="wsv2-home-right">

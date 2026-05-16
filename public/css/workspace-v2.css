@@ -2169,12 +2169,10 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
 .wsv2-home-create-submit:active:not(:disabled) { transform: translateY(1px); }
 .wsv2-home-create-submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
-/* --- Account button (bottom of left column) --- */
+/* --- Account button (topbar) --- */
 .wsv2-home-account {
-  margin-top: auto;
-  padding-top: 24px;
   position: relative;
-  max-width: 320px;
+  width: min(280px, 34vw);
 }
 .wsv2-home-account-btn {
   display: flex;
@@ -2231,9 +2229,9 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
 }
 .wsv2-home-account-menu {
   position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
+  top: calc(100% + 8px);
   right: 0;
+  width: min(220px, 100%);
   background: var(--wsv2-bench-bg);
   border: 1px solid var(--wsv2-hairline-strong);
   border-radius: 10px;
@@ -2510,6 +2508,29 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   .wsv2-home-left,
   .wsv2-home-right {
     padding: 28px 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .wsv2-home-topbar {
+    padding: 16px;
+    gap: 12px;
+  }
+  .wsv2-home-topbar-right {
+    gap: 8px;
+  }
+  .wsv2-home-account {
+    width: auto;
+  }
+  .wsv2-home-account-btn {
+    width: auto;
+    padding: 6px;
+  }
+  .wsv2-home-account-info {
+    display: none;
+  }
+  .wsv2-home-account-menu {
+    width: 180px;
   }
 }
 
@@ -4311,13 +4332,10 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   box-shadow: none;
 }
 
-/* Account widget — collapsed to a single text-line meta row at the
- * very bottom; no avatar, no card border, no shadow. */
+/* Account widget — collapsed to a single text-line meta row; no avatar,
+ * card border, or shadow. */
 .wsv2-home--kami .wsv2-home-account {
-  margin-top: 56px;
-  padding-top: 28px;
-  border-top: 1px solid var(--color-mist);
-  max-width: none;
+  width: auto;
 }
 .wsv2-home--kami .wsv2-home-account-btn {
   background: transparent;
