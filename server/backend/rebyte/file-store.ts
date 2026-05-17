@@ -75,11 +75,16 @@ export const rebyteFileStore: FileStore = {
     if (!ac.id) throw new Error('rebyteFileStore.createProject: agent-computer response missing id')
 
     try {
-      const row = await db.first<ProjectDbRow>(
+      await db.run(
         `INSERT INTO projects (id, user_id, name, workspace_id, vm_id, owns_workspace, sandbox_config)
-         VALUES ($1, $2, $3, $4, $4, 1, $5)
-         RETURNING id, user_id, name, workspace_id, vm_id, created_at`,
+         VALUES ($1, $2, $3, $4, $4, 1, $5)`,
         [projectId, userId, name, ac.id, JSON.stringify(ac)],
+      )
+      const row = await db.first<ProjectDbRow>(
+        `SELECT id, user_id, name, workspace_id, vm_id, created_at
+           FROM projects
+          WHERE id = $1 AND user_id = $2`,
+        [projectId, userId],
       )
       if (!row) throw new Error('rebyteFileStore.createProject: INSERT returned no row')
       return rowToJSON(row)

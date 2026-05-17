@@ -199,11 +199,16 @@ export const localFileStore: FileStore = {
     await mkdir(projectRoot(projectId), { recursive: true })
     await ensureProjectSkillLinks(projectId)
     try {
-      const row = await db.first<ProjectDbRow>(
+      await db.run(
         `INSERT INTO projects (id, user_id, name, workspace_id, vm_id, owns_workspace, sandbox_config)
-         VALUES ($1, $2, $3, $1, NULL, 1, NULL)
-         RETURNING id, user_id, name, workspace_id, vm_id, created_at`,
+         VALUES ($1, $2, $3, $1, NULL, 1, NULL)`,
         [projectId, userId, name],
+      )
+      const row = await db.first<ProjectDbRow>(
+        `SELECT id, user_id, name, workspace_id, vm_id, created_at
+           FROM projects
+          WHERE id = $1 AND user_id = $2`,
+        [projectId, userId],
       )
       if (!row) throw new Error('localFileStore.createProject: INSERT returned no row')
       return rowToJSON(row)
@@ -253,11 +258,16 @@ export const localFileStore: FileStore = {
     }
 
     try {
-      const row = await db.first<ProjectDbRow>(
+      await db.run(
         `INSERT INTO projects (id, user_id, name, workspace_id, vm_id, owns_workspace, sandbox_config)
-         VALUES ($1, $2, $3, $1, NULL, 1, NULL)
-         RETURNING id, user_id, name, workspace_id, vm_id, created_at`,
+         VALUES ($1, $2, $3, $1, NULL, 1, NULL)`,
         [newId, userId, newName],
+      )
+      const row = await db.first<ProjectDbRow>(
+        `SELECT id, user_id, name, workspace_id, vm_id, created_at
+           FROM projects
+          WHERE id = $1 AND user_id = $2`,
+        [newId, userId],
       )
       if (!row) throw new Error('localFileStore.duplicateProject: INSERT returned no row')
       return rowToJSON(row)
