@@ -1809,6 +1809,7 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
 .wsv2-home-left {
   border-right: 1px solid var(--wsv2-hairline);
   position: relative;
+  overflow: hidden;
 }
 
 /* --- Creator form title + privacy note --- */
@@ -1863,11 +1864,14 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   flex-direction: column;
   gap: 14px;
   max-width: 460px;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 20px 20px 22px;
   background: var(--wsv2-bench-bg);
   border: 1px solid var(--wsv2-hairline);
   border-top: 0;
   border-radius: 0 10px 10px 10px;
+  overflow: hidden;
 }
 .wsv2-home-create-title {
   margin: 0;
@@ -1897,6 +1901,9 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   display: flex;
   flex-direction: column;
   gap: 6px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 .wsv2-home-create-label {
   font: 400 12px/1.2 inherit;
@@ -1907,13 +1914,20 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .wsv2-design-system-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  overflow: visible;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-gutter: stable;
 }
 
 .wsv2-design-system-card {
@@ -2163,6 +2177,7 @@ body.wsv2-resizing-chat .wsv2-chat-resizer { pointer-events: auto; }
   border-radius: 8px;
   font: 500 14px/1.2 inherit;
   cursor: pointer;
+  flex: 0 0 auto;
   transition: background 140ms ease, transform 140ms ease, opacity 140ms ease;
 }
 .wsv2-home-create-submit:hover:not(:disabled) { background: color-mix(in oklab, var(--wsv2-accent) 88%, black); }
