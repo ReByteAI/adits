@@ -48,6 +48,15 @@ interface ChatComposerProps {
   onRemoveSkill?: (id: SkillId) => void
 }
 
+function serializeSelectedSkills(skills?: readonly SkillId[]): string {
+  if (!skills || skills.length === 0) return ''
+  const labels = skills.map(id => {
+    const spec = getSkill(id)
+    return spec ? `${spec.label} (${spec.id})` : id
+  })
+  return `Use these selected Adits skills for this turn: ${labels.join(', ')}.`
+}
+
 function ComposerInner({ placeholder, onSubmit, disabled, sendLabel, skills, onRemoveSkill }: ChatComposerProps) {
   const { t } = useTranslation('chat')
   const { t: tc } = useTranslation('common')
@@ -120,6 +129,8 @@ function ComposerInner({ placeholder, onSubmit, disabled, sendLabel, skills, onR
       }
       text = lines.join('\n').trim()
     })
+    const skillText = serializeSelectedSkills(skills)
+    if (skillText) text = text ? `${skillText}\n\n${text}` : skillText
     if (!text) return
 
     try {
@@ -132,7 +143,7 @@ function ComposerInner({ placeholder, onSubmit, disabled, sendLabel, skills, onR
     } catch {
       // onSubmit has already logged. Leave editor text + chips untouched.
     }
-  }, [editor, disabled, onSubmit, setPromptDirty, clearRound, projectId, roundPieces])
+  }, [editor, disabled, onSubmit, setPromptDirty, clearRound, projectId, roundPieces, skills])
 
   useEffect(() => {
     return editor.registerCommand<KeyboardEvent | null>(

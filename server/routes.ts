@@ -83,26 +83,6 @@ function getStripe(): Stripe {
   return stripeClient
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-async function withTransientSandboxRetry<T>(label: string, fn: () => Promise<T>): Promise<T> {
-  const delays = [1500, 3000, 6000, 10000]
-  let attempt = 0
-  for (;;) {
-    try {
-      return await fn()
-    } catch (err) {
-      if (!isTransientSandboxLifecycleError(err) || attempt >= delays.length) throw err
-      const delay = delays[attempt]
-      attempt += 1
-      console.warn(`[${label}] transient sandbox error, retrying in ${delay}ms:`, (err as Error).message)
-      await sleep(delay)
-    }
-  }
-}
-
 async function getUserRebyteBilling(userId: string): Promise<{
   rebyteAccountId: string
   rebyteApiKey: string
@@ -488,14 +468,10 @@ app.post('/projects', requireAuth, async (c) => {
   const row = await fileStore.createProject({ userId, projectId: id, name })
   try {
     if (designSystemId) {
-      await withTransientSandboxRetry('createProject.applyDesignSystem', () =>
-        fileStore.applyDesignSystem({ userId, projectId: id, id: designSystemId }),
-      )
+      await fileStore.applyDesignSystem({ userId, projectId: id, id: designSystemId })
     }
     if (buildingSkillId) {
-      await withTransientSandboxRetry('createProject.applyBuildingSkill', () =>
-        fileStore.applyBuildingSkill({ userId, projectId: id, id: buildingSkillId }),
-      )
+      await fileStore.applyBuildingSkill({ userId, projectId: id, id: buildingSkillId })
     }
   } catch (err) {
     await fileStore.deleteProject({ userId, projectId: id }).catch(() => {})
@@ -555,9 +531,7 @@ app.post('/projects/:id/design-system', requireAuth, async (c) => {
   const id = typeof body.id === 'string' ? body.id.trim() : ''
   if (!id) return c.json({ error: 'id is required' }, 400)
   if (!getDesignSystem(id)) return c.json({ error: `Unknown design system: ${id}` }, 400)
-  await withTransientSandboxRetry('applyDesignSystem', () =>
-    fileStore.applyDesignSystem({ userId, projectId, id }),
-  )
+  await fileStore.applyDesignSystem({ userId, projectId, id })
   return c.json({ ok: true })
 })
 
@@ -571,9 +545,7 @@ app.post('/projects/:id/skills', requireAuth, async (c) => {
   const id = typeof body.id === 'string' ? body.id.trim() : ''
   if (!id) return c.json({ error: 'id is required' }, 400)
   if (!getBuildingSkill(id)) return c.json({ error: `Unknown building skill: ${id}` }, 400)
-  await withTransientSandboxRetry('applyBuildingSkill', () =>
-    fileStore.applyBuildingSkill({ userId, projectId, id }),
-  )
+  await fileStore.applyBuildingSkill({ userId, projectId, id })
   return c.json({ ok: true })
 })
 

@@ -31,6 +31,7 @@ const KIND_LABEL: Record<string, string> = {
   comment: 'Comment',
   edit: 'Edit',
   tweak: 'Tweaks',
+  'tweak-add': 'Tweaks',
   draw: 'Draw',
   'pdf-region': 'Region',
   'image-region': 'Region',
@@ -219,6 +220,15 @@ function serializeForLLM(piece: PromptPiece): string {
     const d = (data ?? {}) as { edits?: Record<string, string | number | boolean> }
     const json = JSON.stringify(d.edits ?? {}, null, 2)
     return `Save the current tweaks in ${ref.fileName}: merge these values into the /*EDITMODE-BEGIN*/.../*EDITMODE-END*/ block: ${json}`
+  }
+
+  if (source === 'tweak-add') {
+    return [
+      `Add Tweaks controls to ${ref.fileName}.`,
+      'Use the make-tweakable skill if available.',
+      'Add a single /*EDITMODE-BEGIN*/.../*EDITMODE-END*/ defaults block, a compact in-page panel titled "Tweaks", and the __activate_edit_mode / __deactivate_edit_mode / __edit_mode_set_keys protocol.',
+      'Choose 3-6 semantic knobs that fit this page; preserve the current visual design as the defaults.',
+    ].join(' ')
   }
 
   const addr = ref.path ? `${ref.fileName} · ${ref.path}` : ref.fileName

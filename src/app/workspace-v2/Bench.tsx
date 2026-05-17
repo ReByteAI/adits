@@ -238,6 +238,7 @@ export default function Bench({ mobileView = 'preview' }: { mobileView?: 'files'
   const presentCtrl = usePresentController(
     iframeBridge, iframeElRef, getNotesSnapshot,
   )
+  const [pageZoom, setPageZoom] = useState(1)
   // Dismissed-state key: the file's UUID. Globally unique, stable
   // across rename, and unaffected by filename collisions in the same
   // project (which store.ts:372-388 tolerates during optimistic
@@ -335,6 +336,25 @@ export default function Bench({ mobileView = 'preview' }: { mobileView?: 'files'
     const url = `${project.fileServerRoot}/${encodeURI(activeFile.name)}`
     window.open(url, '_blank', 'noopener,noreferrer')
   }, [activeFile, project?.fileServerRoot])
+
+  const onTweaksToolbar = useCallback(() => {
+    if (!activeFile) return
+    if (tweaksCtrl.available) {
+      tweaksCtrl.toggle()
+      return
+    }
+    useRoundStore.getState().add({
+      v: 1,
+      source: 'tweak-add',
+      ref: { fileName: activeFile.name },
+      text: `Add Tweaks controls to ${activeFile.name}`,
+      data: {},
+    })
+  }, [activeFile, tweaksCtrl])
+
+  const onZoomToggle = useCallback(() => {
+    setPageZoom(z => (z === 1 ? 1.5 : 1))
+  }, [])
 
   const presentMode = presentCtrl.mode
 
@@ -539,9 +559,11 @@ export default function Bench({ mobileView = 'preview' }: { mobileView?: 'files'
             onCommentToggle={onCommentToggle}
             tweaksAvailable={tweaksCtrl.available}
             tweaksActive={tweaksCtrl.active}
-            onTweaksToggle={tweaksCtrl.toggle}
+            onTweaksToggle={onTweaksToolbar}
             pendingTweakCount={pendingTweakCount}
             onSaveTweaks={onSaveTweaks}
+            zoom={pageZoom}
+            onZoomToggle={onZoomToggle}
             presentHasNotes={speakerNotes.hasNotes}
             onPresentTab={onPresentTab}
             onPresentFullscreen={onPresentFullscreen}
@@ -585,6 +607,7 @@ export default function Bench({ mobileView = 'preview' }: { mobileView?: 'files'
               fileServerRoot={project!.fileServerRoot!}
               iframeRef={onIframeEl}
               containerRef={pageContainerRef}
+              zoom={pageZoom}
             />
             {editCtrl.mode === 'editing' && editCtrl.selection && (
               <PropertiesPanel
@@ -699,7 +722,7 @@ function BenchDropzone({
 /** Per-page toolbar.
  *  All ghost — Send (in the chat composer) is the only pink CTA on
  *  the workspace so the file can stay the hero:
- *    [Tweaks · Comment]  |  [Edit · Draw]  |  [Present]
+ *    [Tweaks · Comment]  |  [Edit]  |  [150% · Present]
  *  Edit's pressed state uses the ghost-active treatment (rose tint on
  *  cream). */
 function PageToolbar({
@@ -707,6 +730,7 @@ function PageToolbar({
   commentActive, onCommentToggle,
   tweaksAvailable, tweaksActive, onTweaksToggle,
   pendingTweakCount, onSaveTweaks,
+  zoom, onZoomToggle,
   presentHasNotes, onPresentTab, onPresentFullscreen, onPresentNewTab,
 }: {
   editActive: boolean
@@ -718,6 +742,8 @@ function PageToolbar({
   onTweaksToggle: () => void
   pendingTweakCount: number
   onSaveTweaks: () => void
+  zoom: number
+  onZoomToggle: () => void
   presentHasNotes: boolean
   onPresentTab: () => void
   onPresentFullscreen: () => void
@@ -730,9 +756,8 @@ function PageToolbar({
         className={`wsv2-btn-ghost${tweaksActive ? ' is-active' : ''}`}
         type="button"
         onClick={onTweaksToggle}
-        disabled={!tweaksAvailable}
         aria-pressed={tweaksActive}
-        title={tweaksAvailable ? t('bench.tweaksToggle') : t('bench.tweaksUnavailable')}
+        title={tweaksAvailable ? t('bench.tweaksToggle') : t('bench.tweaksAdd')}
       >
         {t('bench.tweaks')}
       </button>
@@ -763,8 +788,16 @@ function PageToolbar({
       >
         {t('bench.edit')}
       </button>
-      <button className="wsv2-btn-ghost" type="button">{t('bench.draw')}</button>
       <span className="wsv2-toolbar-sep" aria-hidden="true" />
+      <button
+        className={`wsv2-btn-ghost${zoom !== 1 ? ' is-active' : ''}`}
+        type="button"
+        onClick={onZoomToggle}
+        aria-pressed={zoom !== 1}
+        title={zoom === 1 ? t('bench.zoom150') : t('bench.zoom100')}
+      >
+        {zoom === 1 ? '150%' : '100%'}
+      </button>
       <PresentButton
         hasNotes={presentHasNotes}
         onTab={onPresentTab}
@@ -1228,7 +1261,7 @@ function isScript(file: FileData): boolean {
  *  Adits app origin), and postMessage through `window.parent` handles
  *  all host↔iframe communication. */
 function PageViewer({
-  file, fileServerRoot, iframeRef, containerRef,
+  file, fileServerRoot, iframeRef, containerRef, zoom,
 }: {
   file: FileData
   /** Guaranteed non-null by GET /projects: the server synthesizes the
@@ -1237,6 +1270,7 @@ function PageViewer({
   fileServerRoot: string
   iframeRef: (el: HTMLIFrameElement | null) => void
   containerRef?: React.RefObject<HTMLDivElement | null>
+  zoom: number
 }) {
   // Append a `?v=<reloadKey>` cache-buster so the iframe re-fetches
   // whenever a chat task finishes — file IDs are path-addressed, so an
@@ -1248,16 +1282,18 @@ function PageViewer({
     <div
       className="wsv2-page-scroll"
       ref={containerRef}
-      style={{ flex: 1, minWidth: 0, height: '100%' }}
+      style={{ flex: 1, minWidth: 0, height: '100%', overflow: 'auto' }}
     >
       <iframe
         ref={iframeRef}
         style={{
-          width: '100%',
-          height: '100%',
+          width: `${100 / zoom}%`,
+          height: `${100 / zoom}%`,
           border: 0,
           background: '#fff',
           display: 'block',
+          transform: `scale(${zoom})`,
+          transformOrigin: 'left top',
         }}
         src={src}
         sandbox="allow-scripts allow-forms allow-popups"
