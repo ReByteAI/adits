@@ -33,9 +33,10 @@ import { getSkill, type SkillId } from '../../../packages/shared/skills'
 interface ChatComposerProps {
   placeholder: string
   /** Called with the composed plain-text prompt. The composer clears its
-   *  editor only after `onSubmit` resolves successfully. If the promise
-   *  rejects, the text is left in place so the user can retry without
-   *  losing their prompt. */
+   *  editor optimistically before awaiting `onSubmit` so the user can start
+   *  typing the next prompt without waiting on the API roundtrip. If the
+   *  promise rejects the text is lost — the parent is responsible for
+   *  surfacing the failure (toast / banner) so the user can retype. */
   onSubmit: (text: string) => void | Promise<void>
   /** Disables the editor + Send button. Used when a form-style artifact
    *  has taken over the next user action, or during a send in flight. */
@@ -133,15 +134,21 @@ function ComposerInner({ placeholder, onSubmit, disabled, sendLabel, skills, onR
     if (skillText) text = text ? `${skillText}\n\n${text}` : skillText
     if (!text) return
 
+    // Optimistic clear: the prompt POST chain can take several seconds
+    // (auth check + sandbox sync + Rebyte forward), and waiting on it
+    // before clearing leaves the user staring at their last message in
+    // the box — looks broken. Clear now so the editor is immediately
+    // ready for the next message; the parent surfaces failures via
+    // its own status state.
+    clearRound()
+    editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
+    setPromptDirty(false)
+
     try {
       await onSubmit(text)
-      // Only clear after a successful send — on failure the editor text
-      // and round chips are still there for the user to retry or edit.
-      clearRound()
-      editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
-      setPromptDirty(false)
     } catch {
-      // onSubmit has already logged. Leave editor text + chips untouched.
+      // onSubmit has already logged. Text is gone — parent's UI
+      // (e.g. the "send failed" banner) tells the user to retype.
     }
   }, [editor, disabled, onSubmit, setPromptDirty, clearRound, projectId, roundPieces, skills])
 

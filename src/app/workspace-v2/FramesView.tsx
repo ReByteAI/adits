@@ -175,6 +175,16 @@ function dispatchFrames(frames: TaskFrame[]): Part[] {
         else { flushText(); textBuf = p.content }
         continue
       }
+      // The selector model (gpt-5.4-mini) streams its own response chunks
+      // when it answers directly instead of delegating to the coding agent
+      // — e.g. short replies like "Hi!". Each frame carries one chunk in
+      // `payload.content`; append same as a text delta. Without this case
+      // the prompt finishes `completed` with zero rendered text and the
+      // chat looks like nothing happened.
+      if (d.eventType === 'selector_response' && typeof p.content === 'string') {
+        textBuf += p.content
+        continue
+      }
       if (d.eventType === 'tool_use' && typeof p.name === 'string') {
         flushText()
         out.push({
