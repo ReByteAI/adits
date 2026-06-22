@@ -90,8 +90,8 @@ importers:
         specifier: ^10.4.1
         version: 10.4.1(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       rebyte-sandbox:
-        specifier: git+https://github.com/ReByteAI/sandbox-sdk.git#84b68495e0e958e75835336a59aa9f125dcca0d8
-        version: https://codeload.github.com/ReByteAI/sandbox-sdk/tar.gz/84b68495e0e958e75835336a59aa9f125dcca0d8
+        specifier: git+https://github.com/ReByteAI/sandbox-sdk.git#f8810b72c11f7bac5c2a564060077aa6062b4486
+        version: https://codeload.github.com/ReByteAI/sandbox-sdk/tar.gz/f8810b72c11f7bac5c2a564060077aa6062b4486
       stripe:
         specifier: ^18.5.0
         version: 18.5.0(@types/node@25.6.0)
@@ -1591,8 +1591,8 @@ packages:
   readable-stream@2.3.8:
     resolution: {integrity: sha512-8p0AUk4XODgIewSi0l8Epjs+EVnWiK7NoDIEGU0HhE7+ZyY8D1IMY7odu5lRrFXGg71L15KG8QrPmum45RTtdA==}
 
-  rebyte-sandbox@https://codeload.github.com/ReByteAI/sandbox-sdk/tar.gz/84b68495e0e958e75835336a59aa9f125dcca0d8:
-    resolution: {tarball: https://codeload.github.com/ReByteAI/sandbox-sdk/tar.gz/84b68495e0e958e75835336a59aa9f125dcca0d8}
+  rebyte-sandbox@https://codeload.github.com/ReByteAI/sandbox-sdk/tar.gz/f8810b72c11f7bac5c2a564060077aa6062b4486:
+    resolution: {tarball: https://codeload.github.com/ReByteAI/sandbox-sdk/tar.gz/f8810b72c11f7bac5c2a564060077aa6062b4486}
     version: 0.3.1
     engines: {node: '>=20'}
 
@@ -3249,7 +3249,7 @@ snapshots:
       string_decoder: 1.1.1
       util-deprecate: 1.0.2
 
-  rebyte-sandbox@https://codeload.github.com/ReByteAI/sandbox-sdk/tar.gz/84b68495e0e958e75835336a59aa9f125dcca0d8:
+  rebyte-sandbox@https://codeload.github.com/ReByteAI/sandbox-sdk/tar.gz/f8810b72c11f7bac5c2a564060077aa6062b4486:
     dependencies:
       '@bufbuild/protobuf': 2.11.0
       '@connectrpc/connect': 2.0.0-rc.3(@bufbuild/protobuf@2.11.0)

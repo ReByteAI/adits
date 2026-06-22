@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useStore, useActiveProject, useActiveProjectId, useProjectTasks } from '../store.ts'
 import { useAuthToken } from '../auth.tsx'
+import { IS_LOCAL_BACKEND } from '../auth-shim.tsx'
 import { queryClient } from '../query-client.ts'
 import {
   CHAT_WIDTH_MAX,
@@ -435,7 +436,10 @@ export default function ChatPanel() {
         // editor contents are not.
         <>
           <div className="wsv2-composer-executor-row">
-            {!loadedTaskId && (
+            {/* Executor/model pickers only apply in local mode. The hosted
+                rebyte backend runs a manager agent that picks executor +
+                model itself (org-level loop model) and ignores these. */}
+            {IS_LOCAL_BACKEND && !loadedTaskId && (
               <>
                 <ExecutorPicker value={executor} onChange={handleExecutorChange} disabled={sending} />
                 <ModelPicker executor={executor} value={model} onChange={setModel} disabled={sending} />

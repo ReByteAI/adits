@@ -80,10 +80,19 @@ export async function connectProjectSandbox(
 ): Promise<Sandbox> {
   const sandboxId = await loadProjectSandboxId(userId, projectId)
   const { apiKey, baseUrl } = await getSandboxApiKey(userId)
+  // The SDK mints a sandbox-scoped JWT (sent as X-Access-Token) that the
+  // gateway requires; minting needs the `team_id` claim = the org that owns
+  // `apiKey`. For adits that's the user's per-user Rebyte sub-account. See
+  // cctools relay/src/services/rebyteaivm.ts#getSandboxConfig (teamId: orgId).
+  const account = await db.first<{ rebyte_account_id: string | null }>(
+    'SELECT rebyte_account_id FROM users WHERE id = $1',
+    [userId],
+  )
   const domain = new URL(baseUrl).hostname
   const sbx = await Sandbox.connect(sandboxId, {
     apiUrl: baseUrl,
     apiKey,
+    teamId: account?.rebyte_account_id ?? undefined,
     domain,
   })
   // One-time file-server bootstrap stays DB-gated, but no longer rides on a
