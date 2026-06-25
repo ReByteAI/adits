@@ -16,6 +16,7 @@ import { env } from '../../env.js'
 import { readProjectFile, removeProjectFile } from './sandbox.js'
 import { rebyteFetch, RebyteError, rebyteJSON } from './rebyte.js'
 import { requireUserRebyteKey } from './rebyte-auth.js'
+import { ensureManagerConfigured } from './manager-config.js'
 import { parseQuestionsPayload } from '../local/question-form.js'
 import type { AskDesignQuestionsPayload } from '../../../packages/shared/ask-design-questions.js'
 import type { CreateTaskResult, StreamItem, TaskContent, TaskRunner } from '../task-runner.js'
@@ -34,9 +35,9 @@ async function resolveWorkspace(userId: string, projectId: string): Promise<{ wi
   return { wid: row.workspace_id, key }
 }
 
-async function resolveOwnedTask(userId: string, taskId: string): Promise<{ key: string; projectId: string } | null> {
-  const row = await db.first<{ owns_workspace: number; rebyte_api_key: string | null; project_id: string }>(
-    `SELECT p.owns_workspace, u.rebyte_api_key, p.id AS project_id
+async function resolveOwnedTask(userId: string, taskId: string): Promise<{ key: string; projectId: string; wid: string } | null> {
+  const row = await db.first<{ owns_workspace: number; rebyte_api_key: string | null; project_id: string; workspace_id: string }>(
+    `SELECT p.owns_workspace, u.rebyte_api_key, p.id AS project_id, p.workspace_id
        FROM tasks t
        JOIN projects p ON p.id = t.project_id AND p.user_id = $1
        JOIN users u ON u.id = p.user_id
@@ -45,7 +46,7 @@ async function resolveOwnedTask(userId: string, taskId: string): Promise<{ key: 
   )
   if (!row) return null
   const key = row.owns_workspace && row.rebyte_api_key ? row.rebyte_api_key : env.REBYTE_API_KEY
-  return { key, projectId: row.project_id }
+  return { key, projectId: row.project_id, wid: row.workspace_id }
 }
 
 async function resolveOwnedPrompt(userId: string, promptId: string): Promise<{ key: string; taskId: string } | null> {
@@ -203,6 +204,11 @@ export const rebyteTaskRunner: TaskRunner = {
     const ws = await resolveWorkspace(userId, projectId)
     if (!ws) throw new Error(`Project ${projectId} not found for user ${userId}`)
 
+    // Steer this project's manager agent to build eagerly and never block on
+    // an unanswerable ask_user_question (see manager-config.ts). Idempotent +
+    // best-effort, so it never delays/fails the send after the first time.
+    await ensureManagerConfigured(ws.key, ws.wid)
+
     const task = await rebyteJSON<{ id: string; status?: string; url?: string }>('/tasks', {
       method: 'POST',
       body: JSON.stringify({ ...(extras ?? {}), prompt, workspaceId: ws.wid }),
@@ -318,6 +324,7 @@ export const rebyteTaskRunner: TaskRunner = {
     const hasPromptModel = await supportsPromptModel()
     const owned = await resolveOwnedTask(userId, taskId)
     if (!owned) return null
+    await ensureManagerConfigured(owned.key, owned.wid)
     try {
       const latestBinding = await loadLatestTaskBinding(taskId)
       const executor = latestBinding?.executor
