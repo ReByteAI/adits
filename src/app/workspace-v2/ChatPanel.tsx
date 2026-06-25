@@ -511,6 +511,30 @@ function TabStrip({
     window.dispatchEvent(new PopStateEvent('popstate'))
   }
 
+  // Hidden debug toggle: LONG-PRESS the logo (~0.65s) flips debug view. A
+  // normal click still goes home instantly — click vs long-press is timed on
+  // pointer down/up, so the common "go home" case has no delay and the two
+  // never conflict.
+  const toggleDebugView = useUiStore(s => s.toggleDebugView)
+  const debugView = useDebugViewEnabled()
+  const longPressTimerRef = useRef<number | null>(null)
+  const longPressFiredRef = useRef(false)
+  const startLongPress = () => {
+    longPressFiredRef.current = false
+    longPressTimerRef.current = window.setTimeout(() => {
+      longPressFiredRef.current = true
+      toggleDebugView()
+    }, 650)
+  }
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) { window.clearTimeout(longPressTimerRef.current); longPressTimerRef.current = null }
+  }
+  const onLogoClick = () => {
+    cancelLongPress()
+    if (longPressFiredRef.current) { longPressFiredRef.current = false; return } // long-press already toggled — don't navigate
+    goHome()
+  }
+
   const [renaming, setRenaming] = useState(false)
   const [draftName, setDraftName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -545,7 +569,10 @@ function TabStrip({
           className="wsv2-home-icon"
           aria-label={t('header.projectOverview')}
           type="button"
-          onClick={goHome}
+          onClick={onLogoClick}
+          onPointerDown={startLongPress}
+          onPointerUp={cancelLongPress}
+          onPointerLeave={cancelLongPress}
         >
           <span className="wsv2-home-icon-mark" aria-hidden="true">
             <img src={ADITS_LOGO_URL} alt="" />
@@ -599,6 +626,16 @@ function TabStrip({
         >
           +
         </button>
+        {debugView && (
+          <button
+            type="button"
+            onClick={() => toggleDebugView()}
+            title="Debug mode on — rebyte run links shown in the thread. Click to turn off (or long-press the logo)."
+            style={{ marginLeft: 6, fontSize: 9, fontWeight: 700, letterSpacing: 0.6, padding: '2px 5px', borderRadius: 4, border: '1px solid currentColor', opacity: 0.55, background: 'transparent', cursor: 'pointer', lineHeight: 1.4 }}
+          >
+            DEBUG
+          </button>
+        )}
       </div>
     </div>
   )
@@ -662,8 +699,13 @@ function ChatView({
         <div className="wsv2-task-meta">
           <span>{t(`status.${status}` as 'status.completed', { defaultValue: status })}</span>
           {task.created_at && <span> · {formatSqliteRelative(task.created_at)}</span>}
+          {/* Debug-only: jump to rebyte. Use the key-bearing share URL
+              (task.url = /share/:id?key=…), NOT a bare /run/:id — adits tasks
+              live in the user's per-user rebyte sub-account, a different org
+              than app.rebyte.ai's logged-in one, so /run is org-gated (Access
+              Denied) while the ?key= share route resolves cross-org. */}
           {debugView && task.url && (
-            <> · <a href={task.url} target="_blank" rel="noopener noreferrer">{t('thread.detail')}</a></>
+            <> · <a href={task.url} target="_blank" rel="noopener noreferrer">↗ rebyte</a></>
           )}
         </div>
       </div>
