@@ -5,13 +5,15 @@
  * arrive. When the server emits `event: done` we call `onTerminal` so the
  * parent (ChatPanel) can refetch `/content` for the authoritative snapshot.
  *
- * The render is minimal but type-aware: text deltas concatenate, tool calls
- * show as inline one-liners. Anything we don't recognize falls through.
+ * The render is minimal but type-aware: text deltas concatenate and render as
+ * Markdown, tool calls show as inline one-liners. Anything we don't recognize
+ * falls through.
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { fetchEventSource, EventStreamContentType } from '@microsoft/fetch-event-source'
 import type { TaskFrame } from '../../../packages/shared/api'
+import { Markdown } from './Markdown.tsx'
 
 const EMPTY_FRAMES: TaskFrame[] = []
 
@@ -219,7 +221,7 @@ function summarizeToolInput(name: string, input: any): string {
 
 function FramePart({ part }: { part: Part }) {
   if (part.kind === 'text') {
-    return <span style={{ whiteSpace: 'pre-wrap' }}>{part.text}</span>
+    return <Markdown text={part.text} />
   }
   if (part.kind === 'tool') {
     return (
