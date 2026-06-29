@@ -43,6 +43,14 @@ export function FramesView({
   const onTerminalRef = useRef(onTerminal)
   onTerminalRef.current = onTerminal
 
+  // The SSE delivers a text-delta event every few tokens; turning each into its
+  // own setState re-parses the whole growing message through react-markdown on
+  // every delta — O(n²) over a long reply. Coalesce arrivals in a ref and flush
+  // to state at most once per animation frame, so the live typewriter renders at
+  // ~refresh rate no matter how fast deltas land.
+  const pendingRef = useRef<TaskFrame[]>([])
+  const rafRef = useRef<number | null>(null)
+
   // Reset live buffer on prompt switch.
   useEffect(() => {
     setLiveFrames([])
@@ -61,6 +69,17 @@ export function FramesView({
     const fromSeq = initial.length ? initial[initial.length - 1].seq : 0
     let cursor = fromSeq
 
+    // Drain coalesced frames into state. Runs on the rAF tick, and once more
+    // synchronously on `done` so the final partial line isn't dropped in the gap
+    // before the parent's authoritative /content refetch lands.
+    const flush = () => {
+      rafRef.current = null
+      if (pendingRef.current.length === 0) return
+      const batch = pendingRef.current
+      pendingRef.current = []
+      setLiveFrames(prev => prev.concat(batch))
+    }
+
     const url = `/api/app/prompts/${promptId}/stream?fromSeq=${fromSeq}&token=${encodeURIComponent(authToken)}`
 
     void fetchEventSource(url, {
@@ -74,6 +93,8 @@ export function FramesView({
         if (ev.event === 'done') {
           let status = 'completed'
           try { status = JSON.parse(ev.data).status ?? 'completed' } catch { /* */ }
+          if (rafRef.current != null) cancelAnimationFrame(rafRef.current)
+          flush()  // drain whatever's still buffered before we tear down
           onTerminalRef.current?.(status)
           ctrl.abort()
           return
@@ -84,7 +105,8 @@ export function FramesView({
         cursor = seq
         let data: unknown
         try { data = JSON.parse(ev.data) } catch { return }
-        setLiveFrames(prev => [...prev, { seq, data }])
+        pendingRef.current.push({ seq, data })
+        if (rafRef.current == null) rafRef.current = requestAnimationFrame(flush)
       },
       onerror(err) {
         console.warn('[framesview] SSE error', err)
@@ -92,7 +114,11 @@ export function FramesView({
       },
     }).catch(() => { /* aborted or open-failed; no further action */ })
 
-    return () => { ctrl.abort() }
+    return () => {
+      ctrl.abort()
+      if (rafRef.current != null) { cancelAnimationFrame(rafRef.current); rafRef.current = null }
+      pendingRef.current = []
+    }
   }, [promptId, isRunning, authToken])
 
   // Merge: history + live (live frames have higher seq than the last
