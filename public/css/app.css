@@ -1258,11 +1258,18 @@
 }
 .app-card-thumb-html-frame {
   display: block;
-  width: 1024px;
-  height: 768px;
+  /* Scale the page down to FILL the 4:3 card: --thumb-scale is the single
+     source of truth, and width/height are its inverse so the post-transform
+     box is exactly 100% of the card — no gap, no crop, at any card width
+     (relies on iframe + card both being 4:3). Internal viewport ≈ card_width
+     / scale (~1028px ≈ desktop at the 360px preview). Same trick as
+     PageViewer; the old fixed 1024×768 @ 0.32 gapped wide cards, cropped narrow. */
+  --thumb-scale: 0.35;
+  width: calc(100% / var(--thumb-scale));
+  height: calc(100% / var(--thumb-scale));
   border: 0;
   background: #ffffff;
-  transform: scale(0.32);
+  transform: scale(var(--thumb-scale));
   transform-origin: top left;
   pointer-events: none;
 }
