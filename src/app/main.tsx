@@ -19,10 +19,13 @@ import '../../public/css/app.css'
 // the initial paint.
 import './i18n'
 import { ClerkLocaleProvider } from './i18n/ClerkLocaleProvider.tsx'
+import { trackPageView } from './analytics.ts'
 
 const root = createRoot(document.getElementById('root')!)
 
 const fallback = <div style={{ minHeight: '100vh', background: 'var(--color-bg)' }} />
+
+trackPageView()
 
 if (IS_LOCAL_BACKEND) {
   // Single-user OSS build — no Clerk, no sign-in UI. auth-shim returns a

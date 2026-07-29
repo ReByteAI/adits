@@ -3,6 +3,7 @@ import { useCurrentUser } from '../auth-shim.tsx'
 import { useStore, useActiveProjectId } from '../store.ts'
 import { useUiStore } from '../ui-store.ts'
 import { useLanguageSync } from '../i18n/useLanguageSync.ts'
+import { trackPageView } from '../analytics.ts'
 import WorkspaceV2 from './WorkspaceV2'
 import ProjectList from './ProjectList'
 import '../../../public/css/workspace-v2.css'
@@ -66,6 +67,7 @@ export default function V2App() {
       // scoped to a single project's file list and shouldn't leak
       // across (e.g. /project/A?file=foo.html → /project/B).
       window.history.replaceState(null, '', desired)
+      trackPageView(desired)
     }
   }, [activeProjectId])
 

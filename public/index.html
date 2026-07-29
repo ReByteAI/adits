@@ -1,13 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TEXGHC7V34"></script>
+  <!-- Google tag (GA4 + Google Ads conversion base tag; production only) -->
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-TEXGHC7V34');
+    (function () {
+      if (window.location.hostname !== 'adits.ai') return;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = window.gtag || function(){dataLayer.push(arguments);};
+      window.gtag('js', new Date());
+      window.gtag('config', 'G-BBZG5W8CNB');
+      window.gtag('config', 'AW-17879023048');
+
+      var script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://www.googletagmanager.com/gtag/js?id=G-BBZG5W8CNB';
+      document.head.appendChild(script);
+    })();
   </script>
 
   <meta charset="UTF-8">
